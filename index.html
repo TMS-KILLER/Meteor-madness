@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
 <body>
     <div id="loading-screen">
         <div class="loader"></div>
-        <p>Загрузка данных NASA NeoWs API...</p>
+        <p>Loading NASA NeoWs API data...</p>
     </div>
 
     <div id="ui-container">
@@ -21,85 +21,85 @@
             </div>
 
             <div class="section">
-                <h2>🌌 Выберите астероид</h2>
+                <h2>🌌 Select Asteroid</h2>
                 <select id="asteroid-select" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid #444; border-radius: 6px; color: white; font-size: 14px; cursor: pointer; margin-bottom: 10px;">
-                    <option value="">Загрузка астероидов...</option>
+                    <option value="">Loading asteroids...</option>
                 </select>
                 <button id="load-more-asteroids" class="btn-secondary" style="display: none; margin-top: 10px;">
-                    📥 Загрузить ещё астероидов
+                    📥 Load More Asteroids
                 </button>
             </div>
 
             <div class="section" id="asteroid-info" style="display: none;">
-                <h2>📊 Информация об астероиде</h2>
+                <h2>📊 Asteroid Information</h2>
                 <div id="asteroid-details"></div>
             </div>
 
             <div class="section">
-                <h2>📍 Место падения</h2>
-                <p class="instruction">Выберите место на карте или введите координаты:</p>
+                <h2>📍 Impact Location</h2>
+                <p class="instruction">Click on the map or enter coordinates:</p>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <div style="flex: 1;">
-                        <label style="font-size: 12px; color: #aaa;">Широта (-90 до 90)</label>
+                        <label style="font-size: 12px; color: #aaa;">Latitude (-90 to 90)</label>
                         <input type="number" id="lat-input" min="-90" max="90" step="0.01" value="0" 
                                style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; border-radius: 4px; color: white;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="font-size: 12px; color: #aaa;">Долгота (-180 до 180)</label>
+                        <label style="font-size: 12px; color: #aaa;">Longitude (-180 to 180)</label>
                         <input type="number" id="lng-input" min="-180" max="180" step="0.01" value="0"
                                style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; border-radius: 4px; color: white;">
                     </div>
                 </div>
                 
                 <button id="set-coordinates" class="btn-secondary" style="margin-bottom: 10px;">
-                    📍 Установить координаты
+                    📍 Set Coordinates
                 </button>
                 
                 <div id="coordinates">
-                    <span>Широта: <strong id="lat">0°</strong></span>
-                    <span>Долгота: <strong id="lng">0°</strong></span>
+                    <span>Latitude: <strong id="lat">0°</strong></span>
+                    <span>Longitude: <strong id="lng">0°</strong></span>
                 </div>
                 <div id="map" style="height: 250px; margin-top: 10px; border-radius: 8px; overflow: hidden;"></div>
             </div>
 
             <div class="section">
                 <button id="toggle-visualization" class="btn-visualization">
-                    🔥 Визуализация падения: ВЫКЛ
+                    🔥 Fall Visualization: OFF
                 </button>
                 <button id="start-simulation" class="btn-primary" disabled>
-                    🚀 Начать симуляцию
+                    🚀 Start Simulation
                 </button>
                 <button id="reset-simulation" class="btn-secondary">
-                    🔄 Сбросить
+                    🔄 Reset
                 </button>
             </div>
 
             <div class="section" id="impact-info" style="display: none;">
-                <h2>⚠️ Параметры удара</h2>
+                <h2>⚠️ Impact Parameters</h2>
                 <div id="impact-details"></div>
             </div>
 
             <div class="section" id="realtime-data" style="display: none;">
-                <h2>📊 Данные в реальном времени</h2>
+                <h2>📊 Real-Time Data</h2>
                 <div id="realtime-content" style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 6px;">
                 </div>
             </div>
 
             <div class="section" id="impact-consequences" style="display: none;">
-                <h2>☠️ Последствия падения</h2>
+                <h2>☠️ Impact Consequences</h2>
                 <div id="consequences-data" style="background: rgba(255,50,50,0.1); padding: 12px; border-radius: 6px; border: 2px solid rgba(255,50,50,0.3);">
                 </div>
             </div>
 
             <div class="section" id="historical-comparison" style="display: none;">
-                <h2>📚 Исторические события</h2>
+                <h2>📚 Historical Events</h2>
                 <div id="historical-data" style="background: rgba(100,150,255,0.1); padding: 12px; border-radius: 6px; border: 2px solid rgba(100,150,255,0.3);">
                 </div>
             </div>
 
             <div class="section" id="planetary-defense" style="display: none;">
-                <h2>🛡️ Планетарная защита</h2>
+                <h2>🛡️ Planetary Defense</h2>
                 <div id="defense-data" style="background: rgba(50,255,100,0.1); padding: 12px; border-radius: 6px; border: 2px solid rgba(50,255,100,0.3);">
                 </div>
             </div>
@@ -142,14 +142,14 @@
         });
     </script>
     
-    <!-- Модули приложения - с версионированием для предотвращения кэширования -->
-    <script src="js/config.js?v=6"></script>
-    <script src="js/scene.js?v=6"></script>
-    <script src="js/particles.js?v=6"></script>
-    <script src="js/explosion.js?v=6"></script>
-    <script src="js/nasa.js?v=6"></script>
-    <script src="js/controls.js?v=6"></script>
-    <script src="js/simulation.js?v=6"></script>
-    <script src="js/init.js?v=6"></script>
+    <!-- Modules - versioned to prevent caching -->
+    <script src="js/config.js?v=8"></script>
+    <script src="js/scene.js?v=8"></script>
+    <script src="js/particles.js?v=8"></script>
+    <script src="js/explosion.js?v=8"></script>
+    <script src="js/nasa.js?v=8"></script>
+    <script src="js/controls.js?v=8"></script>
+    <script src="js/simulation.js?v=8"></script>
+    <script src="js/init.js?v=8"></script>
 </body>
 </html>

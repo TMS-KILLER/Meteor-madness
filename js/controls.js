@@ -1,20 +1,20 @@
-// Установка координат вручную
+// Set coordinates manually
 function setCoordinatesFromInput() {
     const latInput = parseFloat(document.getElementById('lat-input').value);
     const lngInput = parseFloat(document.getElementById('lng-input').value);
     
     if (isNaN(latInput) || isNaN(lngInput)) {
-        alert('Пожалуйста, введите корректные координаты!');
+        alert('Please enter valid coordinates!');
         return;
     }
     
     if (latInput < -90 || latInput > 90) {
-        alert('Широта должна быть от -90 до 90');
+        alert('Latitude must be between -90 and 90');
         return;
     }
     
     if (lngInput < -180 || lngInput > 180) {
-        alert('Долгота должна быть от -180 до 180');
+        alert('Longitude must be between -180 and 180');
         return;
     }
     
@@ -119,16 +119,16 @@ function updateMapMarker(lat, lng) {
     window.map.setView([lat, lng], 5);
 }
 
-// Переключение визуализации падения
+// Toggle fall visualization
 function toggleVisualization() {
     showFallVisualization = !showFallVisualization;
     const button = document.getElementById('toggle-visualization');
     
     if (showFallVisualization) {
-        button.textContent = '🔥 Визуализация падения: ВКЛ';
+        button.textContent = '🔥 Fall Visualization: ON';
         button.classList.add('active');
     } else {
-        button.textContent = '🔥 Визуализация падения: ВЫКЛ';
+        button.textContent = '🔥 Fall Visualization: OFF';
         button.classList.remove('active');
     }
 }

@@ -1,63 +1,63 @@
-// Определение местоположения по координатам
+// Determine location by coordinates
 function getLocationDescription(lat, lng) {
-    // Проверяем основные географические зоны
+    // Check main geographical zones
     
-    // Океаны
+    // Oceans
     if (lat > -60 && lat < 60) {
         if (lng > -180 && lng < -30) {
-            if (lat > 0) return "Северная Атлантика";
-            return "Южная Атлантика";
+            if (lat > 0) return "North Atlantic";
+            return "South Atlantic";
         } else if (lng >= -30 && lng < 60) {
-            if (lat > 30) return "Европа/Средиземноморье";
-            if (lat > 0) return "Африка/Средний Восток";
-            return "Южная Африка";
+            if (lat > 30) return "Europe/Mediterranean";
+            if (lat > 0) return "Africa/Middle East";
+            return "Southern Africa";
         } else if (lng >= 60 && lng < 150) {
-            if (lat > 30) return "Центральная Азия";
-            if (lat > 0) return "Индийский океан/Юго-Восточная Азия";
-            return "Индийский океан";
+            if (lat > 30) return "Central Asia";
+            if (lat > 0) return "Indian Ocean/Southeast Asia";
+            return "Indian Ocean";
         } else {
-            if (lat > 0) return "Северная часть Тихого океана";
-            return "Южная часть Тихого океана";
+            if (lat > 0) return "North Pacific Ocean";
+            return "South Pacific Ocean";
         }
     }
     
-    // Полярные регионы
-    if (lat >= 60) return "Арктика/Север";
-    if (lat <= -60) return "Антарктида";
+    // Polar regions
+    if (lat >= 60) return "Arctic/North";
+    if (lat <= -60) return "Antarctica";
     
-    return "Неизвестный регион";
+    return "Unknown Region";
 }
 
-// Запуск симуляции
+// Start simulation
 function startSimulation() {
     if (isSimulationRunning) return;
     
-    // ПРОВЕРКА: убедимся что астероид создан
+    // CHECK: make sure asteroid is created
     if (!asteroid) {
-        console.error('ОШИБКА: Астероид не создан! Проверьте выбор астероида.');
-        alert('Сначала выберите астероид из списка!');
+        console.error('ERROR: Asteroid not created! Check asteroid selection.');
+        alert('Please select an asteroid from the list first!');
         return;
     }
     
     if (!impactLocation || !impactLocation.lat) {
-        console.error('ОШИБКА: Место падения не выбрано!');
-        alert('Сначала выберите место падения на карте или введите координаты!');
+        console.error('ERROR: Impact location not selected!');
+        alert('Please select an impact location on the map or enter coordinates!');
         return;
     }
     
-    console.log('✅ Запуск симуляции с астероидом:', asteroid);
+    console.log('✅ Starting simulation with asteroid:', asteroid);
     
     isSimulationRunning = true;
     document.getElementById('start-simulation').disabled = true;
 
-    // Расчет энергии удара (БЕЗ показа последствий)
+    // Calculate impact energy (WITHOUT showing consequences)
     calculateImpact();
 
-    // Анимация падения
+    // Fall animation
     animateImpact();
 }
 
-// Расчет параметров удара
+// Calculate impact parameters
 function calculateImpact() {
     const diameter = (
         selectedAsteroid.estimated_diameter.meters.estimated_diameter_min +
@@ -68,9 +68,9 @@ function calculateImpact() {
         ? parseFloat(selectedAsteroid.close_approach_data[0].relative_velocity.kilometers_per_second)
         : 20;
 
-    const mass = (4/3) * Math.PI * Math.pow(diameter/2, 3) * 2500; // плотность ~2500 кг/м³
-    const kineticEnergy = 0.5 * mass * Math.pow(velocity * 1000, 2); // Джоули
-    const megatons = kineticEnergy / (4.184 * 10**15); // конвертация в мегатонны TNT
+    const mass = (4/3) * Math.PI * Math.pow(diameter/2, 3) * 2500; // density ~2500 kg/m³
+    const kineticEnergy = 0.5 * mass * Math.pow(velocity * 1000, 2); // Joules
+    const megatons = kineticEnergy / (4.184 * 10**15); // convert to megatons TNT
     const craterDiameter = 1.8 * Math.pow(diameter, 0.78) * Math.pow(velocity, 0.44);
 
     const impactInfo = document.getElementById('impact-info');
@@ -78,27 +78,27 @@ function calculateImpact() {
     
     impactDetails.innerHTML = `
         <div class="detail-row">
-            <span class="detail-label">Масса:</span>
-            <span class="detail-value">${(mass / 1000000).toFixed(2)} тонн</span>
+            <span class="detail-label">Mass:</span>
+            <span class="detail-value">${(mass / 1000000).toFixed(2)} tons</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Энергия удара:</span>
-            <span class="detail-value">${megatons.toFixed(2)} мегатонн TNT</span>
+            <span class="detail-label">Impact Energy:</span>
+            <span class="detail-value">${megatons.toFixed(2)} megatons TNT</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Диаметр кратера:</span>
-            <span class="detail-value">${craterDiameter.toFixed(0)} м</span>
+            <span class="detail-label">Crater Diameter:</span>
+            <span class="detail-value">${craterDiameter.toFixed(0)} m</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Радиус разрушения:</span>
-            <span class="detail-value">${(craterDiameter * 2).toFixed(0)} м</span>
+            <span class="detail-label">Destruction Radius:</span>
+            <span class="detail-value">${(craterDiameter * 2).toFixed(0)} m</span>
         </div>
     `;
 
     impactInfo.style.display = 'block';
     
-    // НЕ показываем последствия здесь - только после удара!
-    // Сохраняем данные для использования после удара
+    // DON'T show consequences here - only after impact!
+    // Save data for use after impact
     window.impactCalculations = {
         diameter,
         velocity,
@@ -109,40 +109,40 @@ function calculateImpact() {
     };
 }
 
-// Расчет последствий падения астероида
+// Calculate asteroid impact consequences
 function calculateConsequences(diameter, velocity, mass, kineticEnergy, megatons, craterDiameter) {
-    // Радиусы различных зон поражения (в км)
-    const fireball = Math.pow(megatons, 0.4) * 0.2; // Огненный шар
-    const radiationRadius = Math.pow(megatons, 0.33) * 2; // Термическое излучение (3-я степень ожогов)
-    const shockwaveRadius = Math.pow(megatons, 0.33) * 5; // Ударная волна (разрушение зданий)
-    const earthquakeRadius = Math.pow(megatons, 0.5) * 10; // Сейсмическая волна
+    // Radii of various damage zones (in km)
+    const fireball = Math.pow(megatons, 0.4) * 0.2; // Fireball
+    const radiationRadius = Math.pow(megatons, 0.33) * 2; // Thermal radiation (3rd degree burns)
+    const shockwaveRadius = Math.pow(megatons, 0.33) * 5; // Shockwave (building destruction)
+    const earthquakeRadius = Math.pow(megatons, 0.5) * 10; // Seismic wave
     
-    // Оценка жертв (грубая)
-    const populationDensity = 100; // средняя плотность населения чел/км²
+    // Casualty estimate (rough)
+    const populationDensity = 100; // average population density people/km²
     const affectedArea = Math.PI * Math.pow(shockwaveRadius, 2);
     const estimatedCasualties = Math.floor(affectedArea * populationDensity);
     
-    // Глубина кратера (обычно 1/5 от диаметра)
+    // Crater depth (typically 1/5 of diameter)
     const craterDepth = craterDiameter / 5;
     
-    // Объем выброшенной породы
+    // Volume of ejected material
     const ejectaVolume = Math.PI * Math.pow(craterDiameter / 2, 2) * craterDepth;
     
-    // Сравнение с известными событиями
+    // Comparison with known events
     let comparison = '';
     if (megatons < 0.01) {
-        comparison = 'Меньше бомбы Хиросимы';
+        comparison = 'Less than Hiroshima bomb';
     } else if (megatons < 1) {
-        comparison = 'Сравнимо с тактическим ядерным оружием';
+        comparison = 'Comparable to tactical nuclear weapon';
     } else if (megatons < 50) {
-        comparison = `В ${(megatons / 0.015).toFixed(0)} раз мощнее бомбы Хиросимы`;
+        comparison = `${(megatons / 0.015).toFixed(0)}x more powerful than Hiroshima bomb`;
     } else if (megatons < 1000) {
-        comparison = 'Сравнимо с крупнейшими ядерными бомбами';
+        comparison = 'Comparable to largest nuclear bombs';
     } else {
-        comparison = 'Катастрофа планетарного масштаба';
+        comparison = 'Planetary-scale catastrophe';
     }
     
-    // Температура в эпицентре
+    // Temperature at epicenter
     const temperatureKelvin = Math.pow(megatons, 0.25) * 5000;
     
     const consequencesPanel = document.getElementById('impact-consequences');
@@ -155,84 +155,84 @@ function calculateConsequences(diameter, velocity, mass, kineticEnergy, megatons
         
         <div class="detail-row" style="margin-bottom: 10px; padding: 10px; background: rgba(100,150,255,0.2); border-radius: 6px;">
             <div style="width: 100%;">
-                <strong style="color: #6bb6ff;">📍 ТОЧКА УДАРА:</strong><br>
-                <span style="color: #fff;">Координаты: ${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°</span><br>
-                <span style="color: #fff;">Регион: ${getLocationDescription(impactLocation.lat, impactLocation.lng)}</span>
+                <strong style="color: #6bb6ff;">📍 IMPACT POINT:</strong><br>
+                <span style="color: #fff;">Coordinates: ${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°</span><br>
+                <span style="color: #fff;">Region: ${getLocationDescription(impactLocation.lat, impactLocation.lng)}</span>
             </div>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">🔥 Диаметр огненного шара:</span>
-            <span class="detail-value">${fireball.toFixed(2)} км</span>
+            <span class="detail-label">🔥 Fireball Diameter:</span>
+            <span class="detail-value">${fireball.toFixed(2)} km</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">🕳️ Диаметр кратера:</span>
-            <span class="detail-value">${(craterDiameter / 1000).toFixed(2)} км (${craterDiameter.toFixed(0)} м)</span>
+            <span class="detail-label">🕳️ Crater Diameter:</span>
+            <span class="detail-value">${(craterDiameter / 1000).toFixed(2)} km (${craterDiameter.toFixed(0)} m)</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">📏 Глубина кратера:</span>
-            <span class="detail-value">${(craterDepth / 1000).toFixed(2)} км (${craterDepth.toFixed(0)} м)</span>
+            <span class="detail-label">📏 Crater Depth:</span>
+            <span class="detail-value">${(craterDepth / 1000).toFixed(2)} km (${craterDepth.toFixed(0)} m)</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">💥 Объем выброшенной породы:</span>
-            <span class="detail-value">${(ejectaVolume / 1e9).toFixed(2)} км³</span>
+            <span class="detail-label">💥 Ejected Material Volume:</span>
+            <span class="detail-value">${(ejectaVolume / 1e9).toFixed(2)} km³</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">🌡️ Температура в эпицентре:</span>
+            <span class="detail-label">🌡️ Temperature at Epicenter:</span>
             <span class="detail-value">${temperatureKelvin.toFixed(0)} K (${(temperatureKelvin - 273).toFixed(0)}°C)</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">☢️ Радиус термических ожогов:</span>
-            <span class="detail-value">${radiationRadius.toFixed(2)} км</span>
+            <span class="detail-label">☢️ Thermal Burns Radius:</span>
+            <span class="detail-value">${radiationRadius.toFixed(2)} km</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">💨 Радиус ударной волны:</span>
-            <span class="detail-value">${shockwaveRadius.toFixed(2)} км</span>
+            <span class="detail-label">💨 Shockwave Radius:</span>
+            <span class="detail-value">${shockwaveRadius.toFixed(2)} km</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">🌍 Радиус сейсмической волны:</span>
-            <span class="detail-value">${earthquakeRadius.toFixed(2)} км</span>
+            <span class="detail-label">🌍 Seismic Wave Radius:</span>
+            <span class="detail-value">${earthquakeRadius.toFixed(2)} km</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">📊 Площадь поражения:</span>
-            <span class="detail-value">${affectedArea.toFixed(0)} км²</span>
+            <span class="detail-label">📊 Affected Area:</span>
+            <span class="detail-value">${affectedArea.toFixed(0)} km²</span>
         </div>
         
         <div class="detail-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-            <span class="detail-label" style="color: #ff6b6b;">☠️ Оценка жертв (при средней плотности):</span>
-            <span class="detail-value" style="color: #ff6b6b; font-weight: bold;">${estimatedCasualties.toLocaleString()} человек</span>
+            <span class="detail-label" style="color: #ff6b6b;">☠️ Casualty Estimate (avg. density):</span>
+            <span class="detail-value" style="color: #ff6b6b; font-weight: bold;">${estimatedCasualties.toLocaleString()} people</span>
         </div>
         
         <div style="margin-top: 15px; padding: 10px; background: rgba(255,100,100,0.2); border-radius: 6px; border-left: 3px solid #ff6b6b;">
-            <strong>⚠️ Долгосрочные последствия:</strong><br>
-            ${megatons > 1000 ? '• Массовое вымирание<br>• Ядерная зима на годы<br>• Разрушение озонового слоя' : 
-              megatons > 100 ? '• Региональная катастрофа<br>• Изменение климата на месяцы<br>• Цунами (если в океан)' :
-              megatons > 10 ? '• Разрушение города<br>• Лесные пожары<br>• Выброс пыли в атмосферу' :
-              '• Локальные разрушения<br>• Временное помутнение атмосферы'}
+            <strong>⚠️ Long-term Consequences:</strong><br>
+            ${megatons > 1000 ? '• Mass extinction<br>• Nuclear winter for years<br>• Ozone layer destruction' : 
+              megatons > 100 ? '• Regional catastrophe<br>• Climate change for months<br>• Tsunami (if ocean impact)' :
+              megatons > 10 ? '• City destruction<br>• Forest fires<br>• Dust ejection into atmosphere' :
+              '• Local destruction<br>• Temporary atmospheric darkening'}
         </div>
     `;
     
     consequencesPanel.style.display = 'block';
     
-    // Вызываем дополнительные панели для NASA Space Apps Challenge
+    // Call additional panels for NASA Space Apps Challenge
     compareWithHistory(diameter, velocity, megatons);
     calculatePlanetaryDefense(diameter, velocity, megatons);
     
-    console.log('=== ПОСЛЕДСТВИЯ ПАДЕНИЯ ===');
-    console.log('Энергия взрыва:', megatons.toFixed(2), 'мегатонн');
+    console.log('=== IMPACT CONSEQUENCES ===');
+    console.log('Explosion energy:', megatons.toFixed(2), 'megatons');
     console.log('Диаметр кратера:', (craterDiameter / 1000).toFixed(2), 'км');
     console.log('Радиус поражения:', shockwaveRadius.toFixed(2), 'км');
 }
 
-// Сравнение с историческими событиями
+// Compare with historical events
 function compareWithHistory(diameter, velocity, megatons) {
     const historicalPanel = document.getElementById('historical-comparison');
     const historicalData = document.getElementById('historical-data');
@@ -242,29 +242,29 @@ function compareWithHistory(diameter, velocity, megatons) {
     let description = '';
     
     if (megatons < 0.001) {
-        historicalEvent = '🏘️ Метеорит Пикскилл (1992)';
-        comparison = 'Очень маленький метеорит';
-        description = 'Упал в США, пробил автомобиль. Диаметр ~10 см. Никто не пострадал.';
+        historicalEvent = '🏘️ Peekskill Meteorite (1992)';
+        comparison = 'Very small meteorite';
+        description = 'Fell in USA, hit a car. Diameter ~10 cm. No casualties.';
     } else if (megatons < 0.5) {
-        historicalEvent = '💥 Челябинский метеорит (2013)';
-        comparison = `В ${(megatons / 0.5).toFixed(1)} раз ${megatons < 0.5 ? 'слабее' : 'мощнее'}`;
-        description = 'Диаметр ~20м, взорвался над Россией. Ударная волна повредила 7200 зданий, ~1500 раненых.';
+        historicalEvent = '💥 Chelyabinsk Meteorite (2013)';
+        comparison = `${(megatons / 0.5).toFixed(1)}x ${megatons < 0.5 ? 'weaker' : 'stronger'}`;
+        description = 'Diameter ~20m, exploded over Russia. Shockwave damaged 7200 buildings, ~1500 injured.';
     } else if (megatons < 15) {
-        historicalEvent = '🌲 Тунгусский метеорит (1908)';
-        comparison = `В ${(megatons / 15).toFixed(1)} раз ${megatons < 15 ? 'слабее' : 'мощнее'}`;
-        description = 'Диаметр ~60-100м, взорвался над Сибирью. Повалил 80 млн деревьев на площади 2150 км².';
+        historicalEvent = '🌲 Tunguska Event (1908)';
+        comparison = `${(megatons / 15).toFixed(1)}x ${megatons < 15 ? 'weaker' : 'stronger'}`;
+        description = 'Diameter ~60-100m, exploded over Siberia. Flattened 80M trees over 2150 km².';
     } else if (megatons < 50) {
-        historicalEvent = '☢️ Царь-бомба (1961)';
-        comparison = `В ${(megatons / 50).toFixed(1)} раз ${megatons < 50 ? 'слабее' : 'мощнее'}`;
-        description = 'Крупнейшее ядерное испытание в истории (СССР). Мощность 50 мегатонн.';
+        historicalEvent = '☢️ Tsar Bomba (1961)';
+        comparison = `${(megatons / 50).toFixed(1)}x ${megatons < 50 ? 'weaker' : 'stronger'}`;
+        description = 'Largest nuclear test in history (USSR). Power 50 megatons.';
     } else if (megatons < 10000) {
-        historicalEvent = '🕳️ Кратер Барринджера (50000 лет назад)';
-        comparison = `Сопоставимо с катастрофой`;
-        description = 'Диаметр астероида ~50м, кратер 1.2км в Аризоне. Энергия ~10 мегатонн.';
+        historicalEvent = '🕳️ Barringer Crater (50,000 years ago)';
+        comparison = `Comparable to catastrophe`;
+        description = 'Asteroid diameter ~50m, crater 1.2km in Arizona. Energy ~10 megatons.';
     } else {
-        historicalEvent = '🦖 Чиксулубский импактор (66 млн лет назад)';
-        comparison = 'КАТАСТРОФА ПЛАНЕТАРНОГО МАСШТАБА';
-        description = 'Диаметр ~10км, кратер 180км в Мексике. Уничтожил динозавров. Энергия ~100 млн мегатонн.';
+        historicalEvent = '🦖 Chicxulub Impactor (66 million years ago)';
+        comparison = 'PLANETARY-SCALE CATASTROPHE';
+        description = 'Diameter ~10km, crater 180km in Mexico. Killed dinosaurs. Energy ~100M megatons.';
     }
     
     historicalData.innerHTML = `
@@ -274,39 +274,39 @@ function compareWithHistory(diameter, velocity, megatons) {
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">⚖️ Сравнение:</span>
+            <span class="detail-label">⚖️ Comparison:</span>
             <span class="detail-value">${comparison}</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">💥 Ваш астероид:</span>
-            <span class="detail-value">${megatons.toFixed(2)} мегатонн</span>
+            <span class="detail-label">💥 Your Asteroid:</span>
+            <span class="detail-value">${megatons.toFixed(2)} megatons</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">📏 Диаметр астероида:</span>
-            <span class="detail-value">${diameter.toFixed(1)} м</span>
+            <span class="detail-label">📏 Asteroid Diameter:</span>
+            <span class="detail-value">${diameter.toFixed(1)} m</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">⚡ Скорость удара:</span>
-            <span class="detail-value">${velocity.toFixed(1)} км/с</span>
+            <span class="detail-label">⚡ Impact Velocity:</span>
+            <span class="detail-value">${velocity.toFixed(1)} km/s</span>
         </div>
         
         ${megatons < 0.5 ? `
             <div style="margin-top: 15px; padding: 10px; background: rgba(50,255,100,0.1); border-radius: 6px; border-left: 3px solid #32ff64;">
-                <strong>✅ Низкая опасность</strong><br>
-                Подобные метеориты падают несколько раз в год.
+                <strong>✅ Low Danger</strong><br>
+                Similar meteorites fall several times per year.
             </div>
         ` : megatons < 15 ? `
             <div style="margin-top: 15px; padding: 10px; background: rgba(255,200,50,0.1); border-radius: 6px; border-left: 3px solid #ffc832;">
-                <strong>⚠️ Средняя опасность</strong><br>
-                Подобные события происходят раз в 100-1000 лет.
+                <strong>⚠️ Medium Danger</strong><br>
+                Similar events occur once every 100-1000 years.
             </div>
         ` : `
             <div style="margin-top: 15px; padding: 10px; background: rgba(255,50,50,0.2); border-radius: 6px; border-left: 3px solid #ff3232;">
-                <strong>🚨 КРИТИЧЕСКАЯ ОПАСНОСТЬ</strong><br>
-                Подобные катастрофы происходят раз в ${megatons > 10000 ? 'миллионы' : 'тысячи'} лет!
+                <strong>🚨 CRITICAL DANGER</strong><br>
+                Similar catastrophes occur once every ${megatons > 10000 ? 'millions' : 'thousands'} of years!
             </div>
         `}
     `;
@@ -314,41 +314,41 @@ function compareWithHistory(diameter, velocity, megatons) {
     historicalPanel.style.display = 'block';
 }
 
-// Расчет планетарной защиты
+// Calculate planetary defense
 function calculatePlanetaryDefense(diameter, velocity, megatons) {
     const defensePanel = document.getElementById('planetary-defense');
     const defenseData = document.getElementById('defense-data');
     
-    // Время предупреждения для различных методов обнаружения
-    const detectionTime = diameter > 100 ? '10+ лет' : diameter > 50 ? '5-10 лет' : diameter > 20 ? '1-5 лет' : 'недели-месяцы';
+    // Warning time for various detection methods
+    const detectionTime = diameter > 100 ? '10+ years' : diameter > 50 ? '5-10 years' : diameter > 20 ? '1-5 years' : 'weeks-months';
     
-    // Методы защиты
+    // Defense methods
     let defenseMethod = '';
     let feasibility = '';
     
     if (megatons < 1) {
-        defenseMethod = '💨 Атмосферный распад';
-        feasibility = 'Небольшие астероиды обычно сгорают в атмосфере. Защита не требуется.';
+        defenseMethod = '💨 Atmospheric Breakup';
+        feasibility = 'Small asteroids usually burn up in atmosphere. Defense not required.';
     } else if (megatons < 100) {
-        defenseMethod = '🚀 Кинетический импактор';
-        feasibility = 'Запуск космического аппарата для столкновения с астероидом и изменения его траектории. Требуется 5-10 лет подготовки. Миссия DART (NASA, 2022) успешно испытала этот метод!';
+        defenseMethod = '🚀 Kinetic Impactor';
+        feasibility = 'Launch spacecraft to collide with asteroid and change its trajectory. Requires 5-10 years preparation. DART Mission (NASA, 2022) successfully tested this method!';
     } else if (megatons < 10000) {
-        defenseMethod = '☢️ Ядерное отклонение';
-        feasibility = 'Взрыв ядерного устройства рядом с астероидом для изменения траектории. Требуется 10+ лет подготовки. Очень рискованный метод.';
+        defenseMethod = '☢️ Nuclear Deflection';
+        feasibility = 'Nuclear device detonation near asteroid to change trajectory. Requires 10+ years preparation. Very risky method.';
     } else {
-        defenseMethod = '🏃 Эвакуация населения';
-        feasibility = 'Астероид слишком велик для отклонения. Единственный вариант - массовая эвакуация из зоны поражения.';
+        defenseMethod = '🏃 Population Evacuation';
+        feasibility = 'Asteroid too large to deflect. Only option - mass evacuation from impact zone.';
     }
     
-    // Время на подготовку
-    const timeNeeded = megatons < 1 ? 'Не требуется' : 
-                       megatons < 100 ? '5-10 лет' : 
-                       megatons < 10000 ? '10-20 лет' : '20+ лет';
+    // Preparation time needed
+    const timeNeeded = megatons < 1 ? 'Not required' : 
+                       megatons < 100 ? '5-10 years' : 
+                       megatons < 10000 ? '10-20 years' : '20+ years';
     
-    // Стоимость миссии
+    // Mission cost estimate
     const costEstimate = megatons < 1 ? 'N/A' :
-                        megatons < 100 ? '$500 млн - $2 млрд' :
-                        megatons < 10000 ? '$5-20 млрд' : '$50+ млрд';
+                        megatons < 100 ? '$500M - $2B' :
+                        megatons < 10000 ? '$5-20B' : '$50B+';
     
     defenseData.innerHTML = `
         <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
@@ -357,42 +357,42 @@ function calculatePlanetaryDefense(diameter, velocity, megatons) {
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">🔭 Время обнаружения:</span>
+            <span class="detail-label">🔭 Detection Time:</span>
             <span class="detail-value">${detectionTime}</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">⏰ Время на подготовку:</span>
+            <span class="detail-label">⏰ Preparation Time:</span>
             <span class="detail-value">${timeNeeded}</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">💰 Стоимость миссии:</span>
+            <span class="detail-label">💰 Mission Cost:</span>
             <span class="detail-value">${costEstimate}</span>
         </div>
         
         <div class="detail-row">
-            <span class="detail-label">🎯 Вероятность успеха:</span>
+            <span class="detail-label">🎯 Success Probability:</span>
             <span class="detail-value">${megatons < 1 ? '100%' : megatons < 100 ? '70-90%' : megatons < 10000 ? '30-60%' : '<10%'}</span>
         </div>
         
         <div style="margin-top: 15px; padding: 12px; background: rgba(100,150,255,0.1); border-radius: 6px; border-left: 3px solid #6496ff;">
-            <strong>🛰️ Программы NASA:</strong><br>
+            <strong>🛰️ NASA Programs:</strong><br>
             <div style="font-size: 13px; color: #aaa; margin-top: 8px; line-height: 1.8;">
-                • <strong>DART</strong> - Успешно изменила орбиту астероида (2022)<br>
-                • <strong>NEO Surveyor</strong> - Телескоп для поиска астероидов (запуск 2027)<br>
-                • <strong>Planetary Defense Office</strong> - Координация защиты Земли<br>
-                • <strong>NEOWs API</strong> - Мониторинг опасных объектов
+                • <strong>DART</strong> - Successfully changed asteroid orbit (2022)<br>
+                • <strong>NEO Surveyor</strong> - Telescope to find asteroids (launch 2027)<br>
+                • <strong>Planetary Defense Office</strong> - Earth protection coordination<br>
+                • <strong>NEOWs API</strong> - Dangerous objects monitoring
             </div>
         </div>
         
         <div style="margin-top: 15px; padding: 12px; background: rgba(255,200,50,0.1); border-radius: 6px; border-left: 3px solid #ffc832;">
-            <strong>📊 Статистика NASA:</strong><br>
+            <strong>📊 NASA Statistics:</strong><br>
             <div style="font-size: 13px; color: #aaa; margin-top: 8px; line-height: 1.8;">
-                • Обнаружено >30,000 околоземных астероидов<br>
-                • ~150 новых находятся каждый месяц<br>
-                • ~2,300 потенциально опасных объектов<br>
-                • Вероятность крупного удара: 1 раз в 100,000 лет
+                • >30,000 near-Earth asteroids discovered<br>
+                • ~150 new found each month<br>
+                • ~2,300 potentially hazardous objects<br>
+                • Major impact probability: once in 100,000 years
             </div>
         </div>
     `;
@@ -502,52 +502,52 @@ function animateImpact() {
         asteroid.rotation.y += rotationSpeed * 0.7;
         asteroid.rotation.z += rotationSpeed * 0.3;
 
-        // РЕАЛЬНЫЕ ДАННЫЕ В РЕАЛЬНОМ ВРЕМЕНИ (обновляется каждый кадр)
+        // REAL DATA IN REAL-TIME (updates every frame)
         const distanceToImpact = asteroid.position.distanceTo(endPos);
-        const currentSpeed = velocity * (1 + progress * 0.5); // Увеличивается из-за гравитации
+        const currentSpeed = velocity * (1 + progress * 0.5); // Increases due to gravity
         const timeToImpact = ((1 - progress) * duration / 1000).toFixed(1);
         
-        // Реальная высота над поверхностью (1 единица = ~637 км в масштабе Земли)
+        // Real altitude above surface (1 unit = ~637 km in Earth scale)
         const altitudeUnits = distanceToImpact - earthRadius;
-        const altitudeKm = Math.max(0, altitudeUnits * 637.1); // км
+        const altitudeKm = Math.max(0, altitudeUnits * 637.1); // km
         
-        // Реальная кинетическая энергия в данный момент
+        // Real kinetic energy at current moment
         const currentKE = 0.5 * mass * Math.pow(currentSpeed * 1000, 2);
         const currentMegatons = currentKE / (4.184 * 10**15);
         
-        // Температура от трения об атмосферу (упрощенная модель)
+        // Temperature from atmospheric friction (simplified model)
         const atmosphereFactor = altitudeKm < 100 ? (100 - altitudeKm) / 100 : 0;
-        const temperature = 20 + (atmosphereFactor * 1500); // До 1500°C
+        const temperature = 20 + (atmosphereFactor * 1500); // Up to 1500°C
         
         const realtimeContentDiv = realtimeData.querySelector('#realtime-content');
         if (realtimeContentDiv) {
             realtimeContentDiv.innerHTML = `
                 <div class="realtime-row" style="background: rgba(255,107,53,0.1); padding: 8px; border-radius: 4px; margin-bottom: 8px;">
-                    <span class="detail-label">⏱️ Время до удара:</span>
-                    <span class="detail-value" style="color: ${timeToImpact < 2 ? '#ff0000' : '#ffaa00'}; font-weight: bold;">${timeToImpact} сек</span>
+                    <span class="detail-label">⏱️ Time to Impact:</span>
+                    <span class="detail-value" style="color: ${timeToImpact < 2 ? '#ff0000' : '#ffaa00'}; font-weight: bold;">${timeToImpact} sec</span>
                 </div>
                 <div class="realtime-row">
-                    <span class="detail-label">📏 Расстояние до цели:</span>
-                    <span class="detail-value">${distanceToImpact.toFixed(2)} ед (${altitudeKm.toFixed(1)} км)</span>
+                    <span class="detail-label">📏 Distance to Target:</span>
+                    <span class="detail-value">${distanceToImpact.toFixed(2)} u (${altitudeKm.toFixed(1)} km)</span>
                 </div>
                 <div class="realtime-row">
-                    <span class="detail-label">🚀 Текущая скорость:</span>
-                    <span class="detail-value">${currentSpeed.toFixed(2)} км/с (${(currentSpeed * 3600).toFixed(0)} км/ч)</span>
+                    <span class="detail-label">🚀 Current Speed:</span>
+                    <span class="detail-value">${currentSpeed.toFixed(2)} km/s (${(currentSpeed * 3600).toFixed(0)} km/h)</span>
                 </div>
                 <div class="realtime-row">
-                    <span class="detail-label">🌡️ Температура поверхности:</span>
+                    <span class="detail-label">🌡️ Surface Temperature:</span>
                     <span class="detail-value" style="color: ${temperature > 1000 ? '#ff4400' : '#ffaa00'};">${temperature.toFixed(0)}°C</span>
                 </div>
                 <div class="realtime-row">
-                    <span class="detail-label">⚡ Кинетическая энергия:</span>
-                    <span class="detail-value">${currentMegatons.toFixed(2)} мегатонн TNT</span>
+                    <span class="detail-label">⚡ Kinetic Energy:</span>
+                    <span class="detail-value">${currentMegatons.toFixed(2)} megatons TNT</span>
                 </div>
                 <div class="realtime-row">
-                    <span class="detail-label">📍 Координаты цели:</span>
+                    <span class="detail-label">📍 Target Coordinates:</span>
                     <span class="detail-value">${impactLocation.lat.toFixed(4)}°, ${impactLocation.lng.toFixed(4)}°</span>
                 </div>
                 <div class="realtime-row">
-                    <span class="detail-label">📊 Прогресс:</span>
+                    <span class="detail-label">📊 Progress:</span>
                     <span class="detail-value">
                         <div style="background: rgba(255,255,255,0.1); height: 20px; border-radius: 10px; overflow: hidden; margin-top: 5px;">
                             <div style="background: linear-gradient(90deg, #ff6b35, #ff0000); height: 100%; width: ${(progress * 100).toFixed(1)}%; transition: width 0.1s;"></div>
@@ -596,58 +596,58 @@ function animateImpact() {
                 targetIndicator = null;
             }
             
-            // Убрать свечение атмосферы
+            // Remove atmosphere glow
             if (atmosphereGlow) {
                 scene.remove(atmosphereGlow);
                 atmosphereGlow = null;
             }
 
-            // Финальные данные
+            // Final data
             const realtimeContentDiv = realtimeData.querySelector('#realtime-content');
             if (realtimeContentDiv) {
                 realtimeContentDiv.innerHTML = `
                     <div class="realtime-row" style="color: #ff0000; font-weight: bold; justify-content: center;">
-                        <span>💥 УДАР ПРОИЗОШЕЛ!</span>
+                        <span>💥 IMPACT OCCURRED!</span>
                     </div>
                     <div class="realtime-row" style="margin-top: 10px;">
-                        <span class="realtime-label">📍 Координаты удара:</span>
+                        <span class="realtime-label">📍 Impact Coordinates:</span>
                         <span class="realtime-value">${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°</span>
                     </div>
                     <div class="realtime-row">
-                        <span class="realtime-label">🌍 Местоположение:</span>
+                        <span class="realtime-label">🌍 Location:</span>
                         <span class="realtime-value">${getLocationDescription(impactLocation.lat, impactLocation.lng)}</span>
                     </div>
                     <div class="realtime-row">
-                        <span class="realtime-label">📏 Диаметр астероида:</span>
-                        <span class="realtime-value">${diameter.toFixed(1)} м</span>
+                        <span class="realtime-label">📏 Asteroid Diameter:</span>
+                        <span class="realtime-value">${diameter.toFixed(1)} m</span>
                     </div>
                     <div class="realtime-row">
-                        <span class="realtime-label">⚡ Скорость удара:</span>
-                        <span class="realtime-value">${velocity.toFixed(2)} км/с</span>
+                        <span class="realtime-label">⚡ Impact Velocity:</span>
+                        <span class="realtime-value">${velocity.toFixed(2)} km/s</span>
                     </div>
                     <div class="realtime-row">
-                        <span class="realtime-label">🕳️ Диаметр кратера:</span>
-                        <span class="realtime-value">${(craterDiameter / 1000).toFixed(2)} км (${craterDiameter.toFixed(0)} м)</span>
+                        <span class="realtime-label">🕳️ Crater Diameter:</span>
+                        <span class="realtime-value">${(craterDiameter / 1000).toFixed(2)} km (${craterDiameter.toFixed(0)} m)</span>
                     </div>
                     <div class="realtime-row">
-                        <span class="realtime-label">💥 Энергия:</span>
-                        <span class="realtime-value">${(kineticEnergy / (4.184 * Math.pow(10, 15))).toFixed(2)} мегатонн ТНТ</span>
+                        <span class="realtime-label">💥 Energy:</span>
+                        <span class="realtime-value">${(kineticEnergy / (4.184 * Math.pow(10, 15))).toFixed(2)} megatons TNT</span>
                     </div>
                 `;
             }
             
-            // ТЕПЕРЬ показываем последствия ПОСЛЕ удара
+            // NOW show consequences AFTER impact
             if (window.impactCalculations) {
                 const calc = window.impactCalculations;
                 calculateConsequences(calc.diameter, calc.velocity, calc.mass, calc.kineticEnergy, calc.megatons, calc.craterDiameter);
             }
             
-            // ПРОВЕРКА ТОЧНОСТИ: Вычисляем координаты из endPos обратно
+            // ACCURACY CHECK: Calculate coordinates back from endPos
             const verifyLat = Math.asin(endPos.y / earthRadius) * (180 / Math.PI);
             const verifyLng = Math.atan2(endPos.x, endPos.z) * (180 / Math.PI);
             
-            console.log('=== ПРОВЕРКА ТОЧНОСТИ УДАРА ===');
-            console.log('🎯 Заданные координаты:', impactLocation.lat.toFixed(6) + '°', impactLocation.lng.toFixed(6) + '°');
+            console.log('=== IMPACT ACCURACY CHECK ===');
+            console.log('🎯 Target coordinates:', impactLocation.lat.toFixed(6) + '°', impactLocation.lng.toFixed(6) + '°');
             console.log('🎯 Фактические координаты удара:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
             console.log('📏 Отклонение по широте:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
             console.log('📏 Отклонение по долготе:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');

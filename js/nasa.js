@@ -1,10 +1,10 @@
-// Загрузка данных NASA
+// Load NASA data
 async function loadNASAData() {
     try {
-        console.log('Попытка загрузки данных NASA...');
+        console.log('Attempting to load NASA data...');
         
         const response = await fetch(`${NASA_API_URL}?page=${currentPage}&size=20&api_key=${NASA_API_KEY}`, {
-            signal: AbortSignal.timeout(10000) // Таймаут 10 секунд
+            signal: AbortSignal.timeout(10000) // 10 second timeout
         });
         
         if (!response.ok) {
@@ -13,45 +13,45 @@ async function loadNASAData() {
         
         const data = await response.json();
         
-        console.log('✅ NASA данные загружены, страница:', currentPage);
-        console.log('Найдено астероидов на странице:', data.near_earth_objects.length);
+        console.log('✅ NASA data loaded, page:', currentPage);
+        console.log('Asteroids found on page:', data.near_earth_objects.length);
         
-        // Добавляем к существующему списку
+        // Add to existing list
         const newAsteroids = data.near_earth_objects;
         allAsteroids = allAsteroids.concat(newAsteroids);
         
-        // ВАЖНО: Ищем импактор-2025 или создаем его
+        // IMPORTANT: Find or create IMPACTOR-2025
         await addImpactor2025();
         
         displayAsteroids(allAsteroids);
         
-        // Показать кнопку "Загрузить ещё" если есть следующая страница
+        // Show "Load More" button if there's a next page
         const loadMoreBtn = document.getElementById('load-more-asteroids');
         if (data.links && data.links.next) {
             loadMoreBtn.style.display = 'block';
-            loadMoreBtn.textContent = `📥 Загрузить ещё астероидов (загружено: ${allAsteroids.length})`;
+            loadMoreBtn.textContent = `📥 Load More Asteroids (loaded: ${allAsteroids.length})`;
         } else {
             loadMoreBtn.style.display = 'none';
         }
         
     } catch (error) {
-        console.error('❌ Ошибка загрузки данных NASA:', error);
+        console.error('❌ Error loading NASA data:', error);
         
-        // Используем запасные данные
-        console.log('⚠️ Загружаем запасные данные...');
+        // Use fallback data
+        console.log('⚠️ Loading fallback data...');
         loadFallbackData();
     }
 }
 
-// Запасные данные если NASA API недоступен
+// Fallback data if NASA API is unavailable
 function loadFallbackData() {
     const selectElement = document.getElementById('asteroid-select');
     
-    // Создаем реалистичные тестовые астероиды
+    // Create realistic test asteroids
     allAsteroids = [
         {
             id: "IMPACTOR-2025",
-            name: "IMPACTOR-2025 (Симуляция)",
+            name: "IMPACTOR-2025 (Simulation)",
             is_potentially_hazardous_asteroid: true,
             estimated_diameter: {
                 meters: {
@@ -70,7 +70,7 @@ function loadFallbackData() {
         },
         {
             id: "2023-ABC",
-            name: "2023 ABC (Симуляция)",
+            name: "2023 ABC (Simulation)",
             is_potentially_hazardous_asteroid: true,
             estimated_diameter: {
                 meters: {
@@ -89,7 +89,7 @@ function loadFallbackData() {
         },
         {
             id: "2024-XYZ",
-            name: "2024 XYZ (Симуляция)",
+            name: "2024 XYZ (Simulation)",
             is_potentially_hazardous_asteroid: false,
             estimated_diameter: {
                 meters: {
@@ -108,7 +108,7 @@ function loadFallbackData() {
         },
         {
             id: "TUNGUSKA",
-            name: "Тунгусский метеорит (1908)",
+            name: "Tunguska Meteorite (1908)",
             is_potentially_hazardous_asteroid: true,
             estimated_diameter: {
                 meters: {
@@ -127,7 +127,7 @@ function loadFallbackData() {
         },
         {
             id: "CHELYABINSK",
-            name: "Челябинский метеорит (2013)",
+            name: "Chelyabinsk Meteorite (2013)",
             is_potentially_hazardous_asteroid: false,
             estimated_diameter: {
                 meters: {
@@ -146,24 +146,24 @@ function loadFallbackData() {
         }
     ];
     
-    console.log('✅ Запасные данные загружены:', allAsteroids.length, 'астероидов');
+    console.log('✅ Fallback data loaded:', allAsteroids.length, 'asteroids');
     displayAsteroids(allAsteroids);
 }
 
-// Загрузить больше астероидов
+// Load more asteroids
 function loadMoreAsteroids() {
     currentPage++;
     loadNASAData();
 }
 
-// Отображение списка астероидов в выпадающем списке
+// Display asteroid list in dropdown
 function displayAsteroids(asteroids) {
     const selectElement = document.getElementById('asteroid-select');
     
-    // Очищаем старые опции, кроме первой (placeholder)
-    selectElement.innerHTML = '<option value="">-- Выберите астероид --</option>';
+    // Clear old options except first (placeholder)
+    selectElement.innerHTML = '<option value="">-- Select Asteroid --</option>';
 
-    // СОРТИРУЕМ: Опасные астероиды первыми, потом по размеру
+    // SORT: Dangerous asteroids first, then by size
     const sortedAsteroids = [...asteroids].sort((a, b) => {
         // Сначала опасные
         if (a.is_potentially_hazardous_asteroid && !b.is_potentially_hazardous_asteroid) return -1;
@@ -259,43 +259,43 @@ function selectAsteroid(asteroidData) {
 
     detailsDiv.innerHTML = `
         <div class="detail-row">
-            <span class="detail-label">Название:</span>
+            <span class="detail-label">Name:</span>
             <span class="detail-value">${asteroidData.name}</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Диаметр:</span>
-            <span class="detail-value">${diameterAvg} м</span>
+            <span class="detail-label">Diameter:</span>
+            <span class="detail-value">${diameterAvg} m</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Скорость:</span>
-            <span class="detail-value">${velocity} км/с</span>
+            <span class="detail-label">Velocity:</span>
+            <span class="detail-value">${velocity} km/s</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Опасность:</span>
+            <span class="detail-label">Hazardous:</span>
             <span class="detail-value" style="color: ${asteroidData.is_potentially_hazardous_asteroid ? '#ff4444' : '#88ff88'};">
-                ${asteroidData.is_potentially_hazardous_asteroid ? 'ДА ⚠️' : 'НЕТ ✓'}
+                ${asteroidData.is_potentially_hazardous_asteroid ? 'YES ⚠️' : 'NO ✓'}
             </span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Абс. величина:</span>
+            <span class="detail-label">Abs. Magnitude:</span>
             <span class="detail-value">${absoluteMagnitude} H</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Мин. дистанция:</span>
+            <span class="detail-label">Min. Distance:</span>
             <span class="detail-value">${missDistance} LD</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Орбита вокруг:</span>
+            <span class="detail-label">Orbiting:</span>
             <span class="detail-value">${orbitingBody}</span>
         </div>
     `;
 
     infoSection.style.display = 'block';
 
-    // Создать астероид в сцене
+    // Create asteroid in scene
     createAsteroidModel(diameterAvg);
 
-    // Проверить готовность к запуску
+    // Check if ready to start
     checkReadyToStart();
 }
 
