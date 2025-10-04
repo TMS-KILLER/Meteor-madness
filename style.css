@@ -1,0 +1,449 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+}
+
+#canvas-container {
+    position: fixed;
+    top: 0;
+    left: 400px;
+    width: calc(100% - 400px);
+    height: 100%;
+    z-index: 1;
+}
+
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 0.5s;
+}
+
+#loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loader {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #ff6b35;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#ui-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 100%;
+    pointer-events: all;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.95);
+    border-right: 2px solid #ff6b35;
+    box-shadow: 5px 0 20px rgba(0, 0, 0, 0.8);
+}
+
+#left-panel {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    pointer-events: all;
+    padding: 20px;
+}
+
+.panel {
+    background: rgba(15, 15, 35, 0.95);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    width: 400px;
+    max-width: calc(100vw - 40px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #ff6b35;
+    text-align: center;
+}
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #ffa07a;
+}
+
+.section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section:last-child {
+    border-bottom: none;
+}
+
+.asteroid-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.asteroid-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.asteroid-card:hover {
+    background: rgba(255, 107, 53, 0.2);
+    border-color: #ff6b35;
+    transform: translateX(5px);
+}
+
+.asteroid-card.selected {
+    background: rgba(255, 107, 53, 0.4);
+    border-color: #ff6b35;
+    border-width: 3px;
+}
+
+.asteroid-name {
+    font-weight: bold;
+    color: #ffa07a;
+    margin-bottom: 5px;
+}
+
+.asteroid-size {
+    font-size: 12px;
+    color: #ccc;
+}
+
+.hazard-badge {
+    display: inline-block;
+    background: #ff4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+.instruction {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+#coordinates {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+#coordinates strong {
+    color: #ff6b35;
+}
+
+.btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff8c42, #ff6b35);
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.5);
+}
+
+.btn-primary:disabled {
+    background: #555;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-cinematic {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid rgba(138, 43, 226, 0.5);
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+    background: rgba(138, 43, 226, 0.2);
+    color: white;
+}
+
+.btn-cinematic:hover {
+    background: rgba(138, 43, 226, 0.3);
+    border-color: rgba(138, 43, 226, 0.8);
+    transform: scale(1.02);
+}
+
+.btn-cinematic.active {
+    background: linear-gradient(135deg, #8a2be2, #9b59b6);
+    border-color: #8a2be2;
+    box-shadow: 0 4px 20px rgba(138, 43, 226, 0.5);
+}
+
+.btn-visualization {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid rgba(255, 107, 53, 0.5);
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+    background: rgba(255, 107, 53, 0.2);
+    color: white;
+}
+
+.btn-visualization:hover {
+    background: rgba(255, 107, 53, 0.3);
+    border-color: rgba(255, 107, 53, 0.8);
+    transform: scale(1.02);
+}
+
+.btn-visualization.active {
+    background: linear-gradient(135deg, #ff6b35, #ff4400);
+    border-color: #ff6b35;
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.6);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 20px rgba(255, 107, 53, 0.6);
+    }
+    50% {
+        box-shadow: 0 4px 30px rgba(255, 107, 53, 0.9);
+    }
+}
+
+#asteroid-details, #impact-details {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+#map {
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    z-index: 1;
+}
+
+.leaflet-popup-content-wrapper {
+    background: rgba(15, 15, 35, 0.95);
+    color: #fff;
+}
+
+.leaflet-popup-tip {
+    background: rgba(15, 15, 35, 0.95);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.detail-label {
+    color: #aaa;
+}
+
+.detail-value {
+    color: #ff6b35;
+    font-weight: bold;
+}
+
+.realtime-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: 4px;
+    animation: dataUpdate 0.5s ease;
+}
+
+@keyframes dataUpdate {
+    0% {
+        background: rgba(255, 107, 53, 0.3);
+    }
+    100% {
+        background: rgba(255, 107, 53, 0.1);
+    }
+}
+
+.realtime-label {
+    color: #aaa;
+    font-size: 14px;
+}
+
+.realtime-value {
+    color: #00ff00;
+    font-weight: bold;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Скроллбар */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 53, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 107, 53, 0.8);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .panel {
+        width: calc(100vw - 40px);
+    }
+}
+
+/* Панель последствий */
+#impact-consequences {
+    animation: slideIn 0.5s ease-out;
+}
+
+#consequences-data .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#consequences-data .detail-row:last-child {
+    border-bottom: none;
+}
+
+#consequences-data .detail-label {
+    color: #ccc;
+    font-size: 14px;
+}
+
+#consequences-data .detail-value {
+    color: #ff6b35;
+    font-weight: bold;
+    text-align: right;
+}
+
+/* Анимация появления панелей */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Выпадающий список астероидов */
+#asteroid-select {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #444;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    outline: none;
+}
+
+#asteroid-select:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #ff6b35;
+}
+
+#asteroid-select:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #ff6b35;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+}
+
+#asteroid-select option {
+    background: #1a1a1a;
+    color: white;
+    padding: 10px;
+}
+
+#asteroid-select option:hover {
+    background: #ff6b35;
+}
