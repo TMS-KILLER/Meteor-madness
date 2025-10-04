@@ -203,5 +203,11 @@ function createCrater(position, craterDiameterMeters) {
     earth.add(craterGroup);
     crater = craterGroup;
     
+    // Add crater to Leaflet map too!
+    if (window.addCraterToMap && impactLocation) {
+        const craterDiameterKm = craterDiameterMeters / 1000;
+        window.addCraterToMap(impactLocation.lat, impactLocation.lng, craterDiameterKm);
+    }
+    
     console.log(`Кратер создан: диаметр ${craterDiameterMeters.toFixed(0)}м, визуальный радиус ${visualRadius.toFixed(2)} единиц`);
 }

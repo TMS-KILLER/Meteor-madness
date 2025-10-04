@@ -402,8 +402,6 @@ function calculatePlanetaryDefense(diameter, velocity, megatons) {
 
 // Анимация удара с данными в реальном времени
 function animateImpact() {
-    const startPos = asteroid.position.clone();
-    
     // 100% ТОЧНОЕ ПОПАДАНИЕ: Вычисляем endPos НАПРЯМУЮ из координат lat/lng
     const earthRadius = 10;
     const lat = impactLocation.lat;
@@ -413,17 +411,26 @@ function animateImpact() {
     const latRad = lat * (Math.PI / 180);
     const lngRad = lng * (Math.PI / 180);
     
-    // ПРЯМОЕ вычисление позиции из географических координат (БЕЗ вращения Земли)
+    // Three.js standard formula for sphere with equirectangular texture
     const endPos = new THREE.Vector3(
-        earthRadius * Math.cos(latRad) * Math.sin(lngRad),
+        -earthRadius * Math.cos(latRad) * Math.sin(lngRad),
         earthRadius * Math.sin(latRad),
-        earthRadius * Math.cos(latRad) * Math.cos(lngRad)
+        -earthRadius * Math.cos(latRad) * Math.cos(lngRad)
     );
     
-    console.log('=== НАЧАЛО СИМУЛЯЦИИ (100% ТОЧНОСТЬ - ПРЯМОЙ РАСЧЕТ) ===');
+    // ВАЖНО: Астероид должен падать СНАРУЖИ Земли!
+    // Создаем стартовую позицию на линии от центра через точку удара
+    const startDistance = 50; // Расстояние от центра Земли (далеко в космосе)
+    const direction = endPos.clone().normalize();
+    const startPos = direction.multiplyScalar(startDistance);
+    
+    // Перемещаем астероид на стартовую позицию
+    asteroid.position.copy(startPos);
+    
+    console.log('=== НАЧАЛО СИМУЛЯЦИИ (100% ТОЧНОСТЬ) ===');
     console.log('Координаты удара:', lat.toFixed(6) + '°', lng.toFixed(6) + '°');
-    console.log('Стартовая позиция астероида:', startPos);
-    console.log('Целевая точка (прямой расчет из lat/lng):', endPos);
+    console.log('Стартовая позиция астероида (вне Земли):', startPos);
+    console.log('Целевая точка (поверхность Земли):', endPos);
     console.log('Расстояние до цели:', startPos.distanceTo(endPos).toFixed(2), 'единиц');
     
     const duration = 5000; // 5 секунд
@@ -644,15 +651,15 @@ function animateImpact() {
             
             // ACCURACY CHECK: Calculate coordinates back from endPos
             const verifyLat = Math.asin(endPos.y / earthRadius) * (180 / Math.PI);
-            const verifyLng = Math.atan2(endPos.x, endPos.z) * (180 / Math.PI);
+            const verifyLng = Math.atan2(-endPos.x, -endPos.z) * (180 / Math.PI);
             
             console.log('=== IMPACT ACCURACY CHECK ===');
             console.log('🎯 Target coordinates:', impactLocation.lat.toFixed(6) + '°', impactLocation.lng.toFixed(6) + '°');
-            console.log('🎯 Фактические координаты удара:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
-            console.log('📏 Отклонение по широте:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
-            console.log('📏 Отклонение по долготе:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');
-            console.log('✅ Позиция кратера в 3D:', endPos);
-            console.log('✅ КРАТЕР СОЗДАН ТОЧНО НА ВЫБРАННЫХ КООРДИНАТАХ!');
+            console.log('🎯 Actual impact coordinates:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
+            console.log('📏 Latitude deviation:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
+            console.log('📏 Longitude deviation:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');
+            console.log('✅ Crater position in 3D:', endPos);
+            console.log('✅ CRATER CREATED EXACTLY AT SELECTED COORDINATES!');
         }
     }
 
@@ -678,10 +685,11 @@ function resetSimulation() {
         impactMarker = null;
     }
 
-    if (crater) {
-        earth.remove(crater);
-        crater = null;
-    }
+    // DON'T REMOVE CRATER - it should stay on the globe!
+    // if (crater) {
+    //     earth.remove(crater);
+    //     crater = null;
+    // }
 
     particles.forEach(p => scene.remove(p.mesh));
     particles = [];

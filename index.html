@@ -60,7 +60,11 @@
                     <span>Latitude: <strong id="lat">0°</strong></span>
                     <span>Longitude: <strong id="lng">0°</strong></span>
                 </div>
-                <div id="map" style="height: 250px; margin-top: 10px; border-radius: 8px; overflow: hidden;"></div>
+                <div style="position: relative;">
+                    <div id="map" style="height: 250px; margin-top: 10px; border-radius: 8px; overflow: hidden;"></div>
+                    <!-- Expand/collapse button in corner -->
+                    <button id="map-expand-btn" class="map-expand-btn" title="Expand Map">⛶</button>
+                </div>
             </div>
 
             <div class="section">
@@ -108,6 +112,19 @@
 
     <div id="canvas-container"></div>
 
+    <!-- Fullscreen Map Overlay -->
+    <div class="map-fullscreen-overlay" id="map-fullscreen-overlay">
+        <div class="map-fullscreen-container">
+            <div class="map-fullscreen-header">
+                <div class="map-fullscreen-title">🗺️ Select Impact Location</div>
+                <button class="map-fullscreen-close" id="map-fullscreen-close">✕</button>
+            </div>
+            <div class="map-fullscreen-content">
+                <div id="map-fullscreen"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Библиотеки - загружаем первыми -->
     <script src="libs/three/three.min.js"></script>
     <script src="libs/three/OrbitControls.js"></script>
@@ -125,6 +142,7 @@
                 return;
             }
             
+            // Small map in panel
             window.map = L.map('map').setView([0, 0], 2);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -139,17 +157,69 @@
                     window.setImpactLocation(e.latlng.lat, e.latlng.lng);
                 }
             });
+            
+            // Fullscreen map
+            window.mapFullscreen = L.map('map-fullscreen').setView([0, 0], 2);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(window.mapFullscreen);
+            
+            window.mapFullscreen.on('click', function(e) {
+                if (window.setImpactLocation) {
+                    window.setImpactLocation(e.latlng.lat, e.latlng.lng);
+                    // DON'T auto-close - user must click close button
+                }
+            });
+            
+            // Map expand button - opens fullscreen
+            const expandBtn = document.getElementById('map-expand-btn');
+            const overlay = document.getElementById('map-fullscreen-overlay');
+            const closeBtn = document.getElementById('map-fullscreen-close');
+            
+            function openFullscreenMap() {
+                overlay.classList.add('active');
+                setTimeout(() => {
+                    window.mapFullscreen.invalidateSize();
+                    // Sync view with small map
+                    const center = window.map.getCenter();
+                    const zoom = window.map.getZoom();
+                    window.mapFullscreen.setView(center, zoom);
+                }, 100);
+            }
+            
+            function closeFullscreenMap() {
+                overlay.classList.remove('active');
+            }
+            
+            expandBtn.addEventListener('click', openFullscreenMap);
+            closeBtn.addEventListener('click', closeFullscreenMap);
+            
+            // Close on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                    closeFullscreenMap();
+                }
+            });
+            
+            // Close on background click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeFullscreenMap();
+                }
+            });
         });
     </script>
     
     <!-- Modules - versioned to prevent caching -->
-    <script src="js/config.js?v=8"></script>
-    <script src="js/scene.js?v=8"></script>
-    <script src="js/particles.js?v=8"></script>
-    <script src="js/explosion.js?v=8"></script>
-    <script src="js/nasa.js?v=8"></script>
-    <script src="js/controls.js?v=8"></script>
-    <script src="js/simulation.js?v=8"></script>
-    <script src="js/init.js?v=8"></script>
+    <script src="js/config.js?v=18"></script>
+    <script src="js/scene.js?v=18"></script>
+    <script src="js/particles.js?v=18"></script>
+    <script src="js/explosion.js?v=18"></script>
+    <script src="js/nasa.js?v=18"></script>
+    <script src="js/controls.js?v=18"></script>
+    <script src="js/simulation.js?v=18"></script>
+    <script src="js/init.js?v=18"></script>
 </body>
 </html>

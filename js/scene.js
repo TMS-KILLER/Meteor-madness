@@ -75,6 +75,10 @@ function createEarth() {
 
     earth = new THREE.Mesh(geometry, material);
     earth.receiveShadow = true;
+    
+    // NO ROTATION - We'll adjust the coordinate formula instead
+    // to match how the texture is actually oriented
+    
     scene.add(earth);
 
     // Атмосфера

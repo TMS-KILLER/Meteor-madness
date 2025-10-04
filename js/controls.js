@@ -38,17 +38,19 @@ function setImpactLocation(lat, lng, point = null) {
     const latRad = lat * (Math.PI / 180);
     const lngRad = lng * (Math.PI / 180);
     
-    // Прямое вычисление позиции из координат
+    // Three.js standard formula for sphere with equirectangular texture
+    // Testing: negative Z to match texture orientation
     const localPoint = new THREE.Vector3(
-        radius * Math.cos(latRad) * Math.sin(lngRad),
+        -radius * Math.cos(latRad) * Math.sin(lngRad),
         radius * Math.sin(latRad),
-        radius * Math.cos(latRad) * Math.cos(lngRad)
+        -radius * Math.cos(latRad) * Math.cos(lngRad)
     );
     
     impactLocation.point = localPoint;
 
-    console.log(`✅ УСТАНОВЛЕНЫ КООРДИНАТЫ: ${lat.toFixed(6)}°, ${lng.toFixed(6)}°`);
-    console.log('✅ 3D позиция (прямой расчет):', localPoint);
+    console.log(`✅ COORDINATES SET: Lat=${lat.toFixed(6)}°, Lng=${lng.toFixed(6)}°`);
+    console.log('✅ 3D Position (calculated):', localPoint);
+    console.log(`   X=${localPoint.x.toFixed(4)}, Y=${localPoint.y.toFixed(4)}, Z=${localPoint.z.toFixed(4)}`);
 
     // Создать маркер НА ЗЕМЛЕ (будет вращаться вместе с Землей)
     if (impactMarker) {
@@ -100,6 +102,7 @@ function checkReadyToStart() {
 function updateMapMarker(lat, lng) {
     if (!window.mapInitialized) return;
     
+    // Update marker on small map
     if (mapMarker) {
         mapMarker.setLatLng([lat, lng]);
     } else {
@@ -113,10 +116,30 @@ function updateMapMarker(lat, lng) {
                 shadowSize: [41, 41]
             })
         }).addTo(window.map);
-        mapMarker.bindPopup('Место падения').openPopup();
+        mapMarker.bindPopup('Impact Location').openPopup();
     }
     
     window.map.setView([lat, lng], 5);
+    
+    // Update marker on fullscreen map too
+    if (window.mapFullscreen) {
+        if (window.mapMarkerFullscreen) {
+            window.mapMarkerFullscreen.setLatLng([lat, lng]);
+        } else {
+            window.mapMarkerFullscreen = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(window.mapFullscreen);
+            window.mapMarkerFullscreen.bindPopup('Impact Location');
+        }
+        window.mapFullscreen.setView([lat, lng], 5);
+    }
 }
 
 // Toggle fall visualization
@@ -132,3 +155,44 @@ function toggleVisualization() {
         button.classList.remove('active');
     }
 }
+
+// Add crater marker to map after impact
+function addCraterToMap(lat, lng, craterDiameterKm) {
+    if (!window.mapInitialized) return;
+    
+    // Create a circle to show crater on small map
+    const craterCircle = L.circle([lat, lng], {
+        color: '#ff0000',
+        fillColor: '#8b0000',
+        fillOpacity: 0.5,
+        radius: (craterDiameterKm / 2) * 1000, // Convert km to meters
+        weight: 2
+    }).addTo(window.map);
+    
+    craterCircle.bindPopup(`<b>Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    
+    // Add to fullscreen map too
+    if (window.mapFullscreen) {
+        const craterCircleFullscreen = L.circle([lat, lng], {
+            color: '#ff0000',
+            fillColor: '#8b0000',
+            fillOpacity: 0.5,
+            radius: (craterDiameterKm / 2) * 1000,
+            weight: 2
+        }).addTo(window.mapFullscreen);
+        
+        craterCircleFullscreen.bindPopup(`<b>Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    }
+    
+    // Store crater circles globally so they persist
+    if (!window.craterMarkers) {
+        window.craterMarkers = [];
+    }
+    window.craterMarkers.push(craterCircle);
+    
+    console.log(`✅ Crater added to map: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+}
+
+// Export for HTML event handlers
+window.toggleVisualization = toggleVisualization;
+window.addCraterToMap = addCraterToMap;

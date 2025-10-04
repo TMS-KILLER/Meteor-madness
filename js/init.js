@@ -80,8 +80,8 @@ function onWindowResize() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Вращение Земли
-    earth.rotation.y += 0.001;
+    // REMOVED: Earth rotation to keep coordinates aligned with map
+    // earth.rotation.y += 0.001;
 
     // Вращение астероида
     if (asteroid && !isSimulationRunning) {
