@@ -28,7 +28,11 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
     }, 50);
 
     // Огненный шар - количество частиц зависит от размера
-    const particleCount = Math.min(100 + Math.floor(diameter / 10), 500);
+    // Уменьшаем для мобильных устройств
+    let particleCount = Math.min(100 + Math.floor(diameter / 10), 500);
+    if (window.MOBILE_PARTICLE_REDUCTION) {
+        particleCount = Math.floor(particleCount * window.MOBILE_PARTICLE_REDUCTION);
+    }
     
     for (let i = 0; i < particleCount; i++) {
         const particleSize = 0.05 + Math.random() * 0.2;
@@ -106,7 +110,12 @@ function createGroundShockwave(position, craterDiameter) {
 // Грибовидное облако для мощных взрывов
 function createMushroomCloud(position, megatons) {
     const cloudSize = Math.min(1 + megatons / 10, 4);
-    const cloudParticles = 50;
+    let cloudParticles = 50;
+    
+    // Уменьшаем для мобильных
+    if (window.MOBILE_PARTICLE_REDUCTION) {
+        cloudParticles = Math.floor(cloudParticles * window.MOBILE_PARTICLE_REDUCTION);
+    }
     
     for (let i = 0; i < cloudParticles; i++) {
         setTimeout(() => {

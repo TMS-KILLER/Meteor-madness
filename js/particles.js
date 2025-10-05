@@ -1,5 +1,10 @@
 // Создание частицы следа
 function createTrailParticle(position) {
+    // Уменьшаем количество частиц на мобильных
+    if (window.MOBILE_PARTICLE_REDUCTION && Math.random() > window.MOBILE_PARTICLE_REDUCTION) {
+        return;
+    }
+    
     const geometry = new THREE.SphereGeometry(0.1, 8, 8);
     const material = new THREE.MeshBasicMaterial({
         color: 0xff6600,
@@ -15,6 +20,11 @@ function createTrailParticle(position) {
 
 // Улучшенная частица следа с учетом скорости
 function createEnhancedTrailParticle(position, velocity, progress) {
+    // Уменьшаем количество частиц на мобильных
+    if (window.MOBILE_PARTICLE_REDUCTION && Math.random() > window.MOBILE_PARTICLE_REDUCTION) {
+        return;
+    }
+    
     const size = 0.1 + (velocity / 100);
     const geometry = new THREE.SphereGeometry(size, 16, 16);
     
@@ -60,7 +70,10 @@ function createAtmosphericEntry() {
 function createAtmosphericHeating(position, progress) {
     const heatIntensity = (progress - 0.7) / 0.3; // От 0 до 1
     
-    for (let i = 0; i < 3; i++) {
+    // Уменьшаем количество частиц на мобильных
+    const particleCount = window.MOBILE_PARTICLE_REDUCTION ? 2 : 3;
+    
+    for (let i = 0; i < particleCount; i++) {
         const size = 0.05 + Math.random() * 0.15;
         const geometry = new THREE.SphereGeometry(size, 8, 8);
         const material = new THREE.MeshBasicMaterial({

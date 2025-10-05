@@ -367,10 +367,325 @@ h2 {
     background: rgba(255, 107, 53, 0.8);
 }
 
-/* Адаптивность */
+/* ============================================
+   АДАПТАЦИЯ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
+   ============================================ */
+
+/* Планшеты (portrait) */
+@media (max-width: 1024px) and (orientation: portrait) {
+    #ui-container {
+        width: 100%;
+        height: 50vh;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        border-right: none;
+        border-top: 2px solid #ff6b35;
+    }
+    
+    #canvas-container {
+        left: 0;
+        width: 100%;
+        height: 50vh;
+        top: 0;
+    }
+    
+    #left-panel {
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+}
+
+/* Мобильные устройства */
 @media (max-width: 768px) {
+    body {
+        overflow: auto;
+    }
+    
+    #ui-container {
+        position: relative;
+        width: 100%;
+        height: auto;
+        min-height: 60vh;
+        border-right: none;
+        border-top: none;
+        background: rgba(0, 0, 0, 0.98);
+    }
+    
+    #canvas-container {
+        position: relative;
+        left: 0;
+        width: 100%;
+        height: 50vh;
+        min-height: 300px;
+    }
+    
+    #left-panel {
+        width: 100%;
+        max-height: none;
+        padding: 15px;
+    }
+    
     .panel {
-        width: calc(100vw - 40px);
+        width: 100%;
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    h2 {
+        font-size: 16px;
+    }
+    
+    .btn-primary, .btn-secondary, .btn-visualization {
+        font-size: 14px;
+        padding: 12px;
+    }
+    
+    #map {
+        height: 200px;
+    }
+    
+    .section {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+    }
+    
+    /* Координаты в столбик на маленьких экранах */
+    #coordinates {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    /* Инпуты координат */
+    .coordinate-inputs {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .coordinate-inputs > div {
+        width: 100% !important;
+    }
+    
+    /* Детали в две колонки */
+    .detail-row {
+        font-size: 13px;
+    }
+    
+    .detail-label, .detail-value {
+        font-size: 13px;
+    }
+    
+    /* Fullscreen map на мобильных */
+    .map-fullscreen-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .map-fullscreen-header {
+        height: 50px;
+        padding: 0 15px;
+    }
+    
+    .map-fullscreen-title {
+        font-size: 18px;
+    }
+    
+    .map-fullscreen-content {
+        top: 50px;
+    }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 16px;
+    }
+    
+    .header p {
+        font-size: 10px;
+    }
+    
+    h2 {
+        font-size: 14px;
+    }
+    
+    .btn-primary, .btn-secondary, .btn-visualization {
+        font-size: 13px;
+        padding: 10px;
+    }
+    
+    #map {
+        height: 180px;
+    }
+    
+    .detail-row {
+        font-size: 12px;
+    }
+    
+    .section {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+}
+
+/* Landscape mode на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+    #ui-container {
+        width: 40%;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        border-right: 2px solid #ff6b35;
+        border-top: none;
+    }
+    
+    #canvas-container {
+        width: 60%;
+        height: 100vh;
+        left: 40%;
+        top: 0;
+    }
+    
+    #left-panel {
+        height: 100vh;
+        max-height: 100vh;
+    }
+    
+    #map {
+        height: 150px;
+    }
+}
+
+/* Поддержка touch устройств */
+@media (hover: none) and (pointer: coarse) {
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-visualization:active {
+        transform: scale(0.95);
+    }
+    
+    .asteroid-card:active {
+        transform: translateX(3px);
+    }
+    
+    .map-expand-btn:active {
+        transform: scale(0.9);
+    }
+    
+    /* Увеличиваем размер кликабельных элементов */
+    button {
+        min-height: 44px;
+    }
+    
+    input[type="number"] {
+        min-height: 44px;
+        font-size: 16px; /* Предотвращает zoom на iOS */
+    }
+    
+    select {
+        min-height: 44px;
+        font-size: 16px;
+    }
+}
+
+/* Hamburger menu для мобильных (опционально) */
+@media (max-width: 768px) {
+    .mobile-toggle {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 10001;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 107, 53, 0.9);
+        border: none;
+        border-radius: 10px;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .mobile-toggle span {
+        width: 25px;
+        height: 3px;
+        background: white;
+        border-radius: 2px;
+        transition: all 0.3s;
+    }
+    
+    .mobile-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .mobile-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .mobile-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+    }
+}
+
+/* Улучшенный scrollbar для мобильных */
+@media (max-width: 768px) {
+    #left-panel::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    #left-panel::-webkit-scrollbar-thumb {
+        background: rgba(255, 107, 53, 0.6);
+        border-radius: 2px;
+    }
+}
+
+/* Прелоадер оптимизация */
+@media (max-width: 768px) {
+    #loading-screen {
+        background: rgba(0, 0, 0, 0.98);
+    }
+    
+    .loader {
+        width: 50px;
+        height: 50px;
+    }
+    
+    #loading-screen p {
+        font-size: 14px;
+    }
+}
+
+/* Безопасная зона для iPhone с выемкой */
+@supports (padding-top: env(safe-area-inset-top)) {
+    #ui-container {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Оптимизация анимаций для производительности */
+@media (max-width: 768px) {
+    * {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        will-change: transform;
     }
 }
 
