@@ -65,6 +65,26 @@ async function init() {
     // Скрыть экран загрузки
     document.getElementById('loading-screen').classList.add('hidden');
 
+    // Вывод информации о тестировании
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🌍 METEOR MADNESS - NASA Space Apps Challenge 2025');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('');
+    console.log('📍 COORDINATE TESTING FUNCTIONS:');
+    console.log('  • testCoordinates()     - Log coordinates for known cities');
+    console.log('  • showTestMarkers()     - Show colored markers on globe');
+    console.log('  • clearTestMarkers()    - Remove test markers');
+    console.log('');
+    console.log('🔧 COORDINATE SYSTEM:');
+    console.log('  • Latitude: -90° (South) to +90° (North)');
+    console.log('  • Longitude: -180° (West) to +180° (East)');
+    console.log('  • 0°,0° = Gulf of Guinea (West Africa coast)');
+    console.log('');
+    console.log('✅ All systems ready! Select asteroid and impact location.');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('');
+
     // Запуск анимации
     animate();
 }

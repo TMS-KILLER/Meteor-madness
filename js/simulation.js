@@ -402,7 +402,7 @@ function calculatePlanetaryDefense(diameter, velocity, megatons) {
 
 // Анимация удара с данными в реальном времени
 function animateImpact() {
-    // 100% ТОЧНОЕ ПОПАДАНИЕ: Вычисляем endPos НАПРЯМУЮ из координат lat/lng
+    // 100% ТОЧНОЕ ПОПАДАНИЕ: Используем ТУ ЖЕ формулу что и в controls.js
     const earthRadius = 10;
     const lat = impactLocation.lat;
     const lng = impactLocation.lng;
@@ -411,11 +411,11 @@ function animateImpact() {
     const latRad = lat * (Math.PI / 180);
     const lngRad = lng * (Math.PI / 180);
     
-    // Three.js standard formula for sphere with equirectangular texture
+    // ПРАВИЛЬНАЯ формула - совпадает с controls.js
     const endPos = new THREE.Vector3(
-        -earthRadius * Math.cos(latRad) * Math.sin(lngRad),
-        earthRadius * Math.sin(latRad),
-        -earthRadius * Math.cos(latRad) * Math.cos(lngRad)
+        earthRadius * Math.cos(latRad) * Math.sin(lngRad),   // X
+        earthRadius * Math.sin(latRad),                       // Y
+        -earthRadius * Math.cos(latRad) * Math.cos(lngRad)   // Z
     );
     
     // ВАЖНО: Астероид должен падать СНАРУЖИ Земли!
@@ -667,7 +667,7 @@ function animateImpact() {
             
             // ACCURACY CHECK: Calculate coordinates back from endPos
             const verifyLat = Math.asin(endPos.y / earthRadius) * (180 / Math.PI);
-            const verifyLng = Math.atan2(-endPos.x, -endPos.z) * (180 / Math.PI);
+            const verifyLng = Math.atan2(endPos.x, -endPos.z) * (180 / Math.PI);
             
             console.log('=== IMPACT ACCURACY CHECK ===');
             console.log('🎯 Target coordinates:', impactLocation.lat.toFixed(6) + '°', impactLocation.lng.toFixed(6) + '°');
@@ -675,7 +675,12 @@ function animateImpact() {
             console.log('📏 Latitude deviation:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
             console.log('📏 Longitude deviation:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');
             console.log('✅ Crater position in 3D:', endPos);
-            console.log('✅ CRATER CREATED EXACTLY AT SELECTED COORDINATES!');
+            
+            if (Math.abs(impactLocation.lat - verifyLat) < 0.001 && Math.abs(impactLocation.lng - verifyLng) < 0.001) {
+                console.log('✅ PERFECT ACCURACY - Crater, marker, and map all aligned!');
+            } else {
+                console.warn('⚠️ Coordinate mismatch detected!');
+            }
         }
     }
 

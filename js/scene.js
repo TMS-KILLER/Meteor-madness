@@ -84,8 +84,10 @@ function createEarth() {
     earth = new THREE.Mesh(geometry, material);
     earth.receiveShadow = true;
     
-    // NO ROTATION - We'll adjust the coordinate formula instead
-    // to match how the texture is actually oriented
+    // НЕ ПОВОРАЧИВАЕМ Землю - вместо этого корректируем формулы координат
+    // Текстура выровнена стандартно: 0° долготы по оси -Z
+    
+    console.log('🌍 Earth created with standard texture alignment');
     
     scene.add(earth);
 

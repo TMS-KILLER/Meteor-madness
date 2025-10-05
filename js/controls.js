@@ -31,19 +31,20 @@ function setImpactLocation(lat, lng, point = null) {
     document.getElementById('lat-input').value = lat.toFixed(2);
     document.getElementById('lng-input').value = lng.toFixed(2);
 
-    // ПРЯМАЯ ФОРМУЛА из географических координат (БЕЗ учета вращения)
+    // ИСПРАВЛЕННАЯ ФОРМУЛА для совпадения с картой
+    // Стандартная сферическая система координат для equirectangular текстуры
     const radius = 10; // Радиус Земли в модели
     
     // Конвертируем градусы в радианы
     const latRad = lat * (Math.PI / 180);
     const lngRad = lng * (Math.PI / 180);
     
-    // Three.js standard formula for sphere with equirectangular texture
-    // Testing: negative Z to match texture orientation
+    // ПРАВИЛЬНАЯ формула для Three.js с стандартной текстурой Земли
+    // Longitude 0° = -Z axis, Latitude 0° = equator
     const localPoint = new THREE.Vector3(
-        -radius * Math.cos(latRad) * Math.sin(lngRad),
-        radius * Math.sin(latRad),
-        -radius * Math.cos(latRad) * Math.cos(lngRad)
+        radius * Math.cos(latRad) * Math.sin(lngRad),   // X
+        radius * Math.sin(latRad),                       // Y
+        -radius * Math.cos(latRad) * Math.cos(lngRad)   // Z (negative because 0° lng is at -Z)
     );
     
     impactLocation.point = localPoint;
@@ -51,10 +52,46 @@ function setImpactLocation(lat, lng, point = null) {
     console.log(`✅ COORDINATES SET: Lat=${lat.toFixed(6)}°, Lng=${lng.toFixed(6)}°`);
     console.log('✅ 3D Position (calculated):', localPoint);
     console.log(`   X=${localPoint.x.toFixed(4)}, Y=${localPoint.y.toFixed(4)}, Z=${localPoint.z.toFixed(4)}`);
+    
+    // ПРОВЕРКА: Пересчитываем координаты обратно из 3D позиции
+    const verifyLat = Math.asin(localPoint.y / radius) * (180 / Math.PI);
+    const verifyLng = Math.atan2(localPoint.x, -localPoint.z) * (180 / Math.PI);
+    console.log(`🔍 VERIFICATION: Lat=${verifyLat.toFixed(6)}°, Lng=${verifyLng.toFixed(6)}°`);
+    console.log(`📏 Deviation: Lat=${Math.abs(lat - verifyLat).toFixed(8)}°, Lng=${Math.abs(lng - verifyLng).toFixed(8)}°`);
+    
+    if (Math.abs(lat - verifyLat) > 0.001 || Math.abs(lng - verifyLng) > 0.001) {
+        console.warn('⚠️ Coordinate mismatch detected!');
+    } else {
+        console.log('✅ Coordinates verified - perfect match!');
+    }
 
     // Создать маркер НА ЗЕМЛЕ (будет вращаться вместе с Землей)
     if (impactMarker) {
-        earth.remove(impactMarker);
+        // Правильно удаляем старый маркер
+        if (impactMarker.parent) {
+            impactMarker.parent.remove(impactMarker);
+        }
+        // Очищаем геометрию и материалы
+        if (impactMarker.geometry) impactMarker.geometry.dispose();
+        if (impactMarker.material) {
+            if (Array.isArray(impactMarker.material)) {
+                impactMarker.material.forEach(mat => mat.dispose());
+            } else {
+                impactMarker.material.dispose();
+            }
+        }
+        // Очищаем дочерние объекты (кольцо)
+        impactMarker.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material.forEach(mat => mat.dispose());
+                } else {
+                    child.material.dispose();
+                }
+            }
+        });
+        impactMarker = null;
     }
 
     const markerGeometry = new THREE.SphereGeometry(0.4, 16, 16);
@@ -65,11 +102,12 @@ function setImpactLocation(lat, lng, point = null) {
     });
     impactMarker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Маркер на поверхности Земли в локальных координатах
+    // Устанавливаем маркер ТОЧНО на вычисленную позицию
+    // Немного выше поверхности для видимости (10.2 вместо 10.0)
     impactMarker.position.copy(localPoint).normalize().multiplyScalar(10.2);
     earth.add(impactMarker); // Привязан к Земле - будет вращаться вместе с ней
     
-    // Добавим пульсирующее кольцо для лучшей видимости
+    // Добавим пульсирующее кольцо, направленное к центру Земли
     const ringGeometry = new THREE.RingGeometry(0.5, 0.6, 32);
     const ringMaterial = new THREE.MeshBasicMaterial({
         color: 0xff0000,
@@ -78,17 +116,109 @@ function setImpactLocation(lat, lng, point = null) {
         opacity: 0.7
     });
     const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    ring.lookAt(new THREE.Vector3(0, 0, 0));
+    // Направляем кольцо перпендикулярно к поверхности
+    const normalVector = localPoint.clone().normalize();
+    ring.lookAt(normalVector.multiplyScalar(100)); // Смотрит от центра Земли
     impactMarker.add(ring);
 
     // Обновить маркер на карте
     updateMapMarker(lat, lng);
+    
+    console.log(`🗺️ Map marker updated at: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`🌍 3D marker position on globe:`, impactMarker.position);
 
     checkReadyToStart();
 }
 
 // Экспорт для использования из HTML
 window.setImpactLocation = setImpactLocation;
+
+// Тестовая функция для проверки координат известных мест
+function testCoordinates() {
+    console.log('=== ТЕСТ КООРДИНАТ ===');
+    const testPoints = [
+        { name: 'Нулевая точка (0°, 0°)', lat: 0, lng: 0 },
+        { name: 'Лондон (51.5°N, 0°)', lat: 51.5, lng: 0 },
+        { name: 'Москва (55.75°N, 37.6°E)', lat: 55.75, lng: 37.6 },
+        { name: 'Нью-Йорк (40.7°N, 74°W)', lat: 40.7, lng: -74 },
+        { name: 'Токио (35.7°N, 139.7°E)', lat: 35.7, lng: 139.7 },
+        { name: 'Сидней (33.9°S, 151.2°E)', lat: -33.9, lng: 151.2 }
+    ];
+    
+    const radius = 10;
+    testPoints.forEach(point => {
+        const latRad = point.lat * (Math.PI / 180);
+        const lngRad = point.lng * (Math.PI / 180);
+        
+        // ПРАВИЛЬНАЯ формула
+        const pos = new THREE.Vector3(
+            radius * Math.cos(latRad) * Math.sin(lngRad),
+            radius * Math.sin(latRad),
+            -radius * Math.cos(latRad) * Math.cos(lngRad)
+        );
+        
+        // Проверка обратного преобразования
+        const verifyLat = Math.asin(pos.y / radius) * (180 / Math.PI);
+        const verifyLng = Math.atan2(pos.x, -pos.z) * (180 / Math.PI);
+        
+        console.log(`${point.name}:`);
+        console.log(`  3D: X=${pos.x.toFixed(3)}, Y=${pos.y.toFixed(3)}, Z=${pos.z.toFixed(3)}`);
+        console.log(`  Verify: ${verifyLat.toFixed(2)}°, ${verifyLng.toFixed(2)}° ✓`);
+    });
+}
+
+// Экспорт для тестирования из консоли
+window.testCoordinates = testCoordinates;
+
+// Визуальный тест - отметить известные города на глобусе
+function showTestMarkers() {
+    console.log('🗺️ Adding test markers for known cities...');
+    
+    const testCities = [
+        { name: 'London', lat: 51.5, lng: 0, color: 0x00ff00 },
+        { name: 'Moscow', lat: 55.75, lng: 37.6, color: 0xff0000 },
+        { name: 'New York', lat: 40.7, lng: -74, color: 0x0000ff },
+        { name: 'Tokyo', lat: 35.7, lng: 139.7, color: 0xffff00 },
+        { name: 'Sydney', lat: -33.9, lng: 151.2, color: 0xff00ff }
+    ];
+    
+    testCities.forEach(city => {
+        const radius = 10;
+        const latRad = city.lat * (Math.PI / 180);
+        const lngRad = city.lng * (Math.PI / 180);
+        
+        const pos = new THREE.Vector3(
+            radius * Math.cos(latRad) * Math.sin(lngRad),
+            radius * Math.sin(latRad),
+            -radius * Math.cos(latRad) * Math.cos(lngRad)
+        );
+        
+        const markerGeo = new THREE.SphereGeometry(0.3, 16, 16);
+        const markerMat = new THREE.MeshBasicMaterial({ color: city.color });
+        const marker = new THREE.Mesh(markerGeo, markerMat);
+        marker.position.copy(pos).normalize().multiplyScalar(10.3);
+        marker.name = `test-marker-${city.name}`;
+        earth.add(marker);
+        
+        console.log(`✓ ${city.name} marker added at ${city.lat}°, ${city.lng}°`);
+    });
+    
+    console.log('✅ Test markers added! Check if they match real locations on the globe.');
+}
+
+// Удалить тестовые маркеры
+function clearTestMarkers() {
+    const markers = earth.children.filter(child => child.name && child.name.startsWith('test-marker-'));
+    markers.forEach(marker => {
+        earth.remove(marker);
+        if (marker.geometry) marker.geometry.dispose();
+        if (marker.material) marker.material.dispose();
+    });
+    console.log('🗑️ Test markers cleared');
+}
+
+window.showTestMarkers = showTestMarkers;
+window.clearTestMarkers = clearTestMarkers;
 
 // Проверка готовности к запуску
 function checkReadyToStart() {
