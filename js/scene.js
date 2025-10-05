@@ -54,17 +54,20 @@ function createStarfield() {
     return stars;
 }
 
-// Создание Земли
+// Создание Земли - УВЕЛИЧЕННАЯ МОДЕЛЬ
 function createEarth() {
-    const geometry = new THREE.SphereGeometry(10, 64, 64);
+    const earthRadius = 15; // Увеличено с 10 до 15 (на 50%)
+    const geometry = new THREE.SphereGeometry(earthRadius, 64, 64);
     
     // Локальная текстура Земли от NASA Blue Marble
     const textureLoader = new THREE.TextureLoader();
     const earthTexture = textureLoader.load(
         'textures/earth.jpg',
         () => {
-            console.log('✅ Текстура Земли загружена (стандартная ориентация, БЕЗ смещения)');
-            console.log('📐 Mapping: 0° longitude (Greenwich) = +Z axis (ФРОНТ)');
+            console.log('✅ Текстура Земли загружена (NASA Blue Marble - Equirectangular)');
+            console.log('📐 INVERTED MAPPING: lng инвертирована! Карта зеркальна к текстуре');
+            console.log('📐 Formula: X=R*cos(lat)*cos(-lng), Y=R*sin(lat), Z=R*cos(lat)*sin(-lng)');
+            console.log('🔄 Inverse: lat=asin(y/R), lng=-atan2(z,x)');
         },
         undefined,
         (error) => {
@@ -78,24 +81,21 @@ function createEarth() {
         }
     );
     
-    // NASA Blue Marble текстура: центр на Тихом океане (~180°)
-    // Нужно сдвинуть на 0.5 чтобы 0° (Гринвич) был спереди
-    // Equirectangular UV mapping: u=0 → -180°, u=0.5 → 0°, u=1.0 → +180°
+    // БЕЗ СМЕЩЕНИЯ - текстура NASA Blue Marble уже правильно ориентирована
+    // Equirectangular UV mapping стандартное
     earthTexture.wrapS = THREE.RepeatWrapping;
     earthTexture.wrapT = THREE.ClampToEdgeWrapping;
-    earthTexture.offset.x = 0.5; // Сдвиг на 180° - теперь Гринвич спереди
+    // earthTexture.offset.x = 0; // НЕТ СМЕЩЕНИЯ!
     
-    // ВАЖНО: Текстура сдвинута, но координаты остаются стандартными
-    // У нас 0° lng → передняя ось (видимая часть глобуса)
+    // Координаты теперь ТОЧНО совпадают с текстурой
 
-    const material = new THREE.MeshPhongMaterial({
-        map: earthTexture,
-        specular: new THREE.Color(0x333333),
-        shininess: 15
+    // MeshLambertMaterial хорошо работает с ambient светом (равномерное освещение)
+    const material = new THREE.MeshLambertMaterial({
+        map: earthTexture
     });
 
     earth = new THREE.Mesh(geometry, material);
-    earth.receiveShadow = true;
+    // earth.receiveShadow = true; // Не нужно - нет directional света
 
     // Начальная позиция: 0° (без поворота)
     earth.rotation.y = 0;
@@ -103,14 +103,17 @@ function createEarth() {
     // Реалистичное вращение Земли - МЕДЛЕННОЕ (1 оборот = 2 минуты)
     // 2 минуты = 120 секунд = 7200 кадров при 60fps
     window.earthRotationSpeed = (2 * Math.PI) / (120 * 60); // радиан/кадр при 60fps = 2 мин на оборот
+    
+    // Сохраняем радиус Земли глобально для использования в расчетах
+    window.earthRadius = earthRadius;
 
-    console.log('🌍 Earth texture aligned: 0° longitude (Greenwich) at front');
+    console.log('🌍 Earth created: radius =', earthRadius, 'units (150% larger)');
     console.log('🔄 Rotation enabled: 1 revolution = 2 minutes (SLOW realistic rotation)');
 
     scene.add(earth);
 
-    // Атмосфера
-    const atmosphereGeometry = new THREE.SphereGeometry(10.5, 64, 64);
+    // Атмосфера - также увеличена пропорционально
+    const atmosphereGeometry = new THREE.SphereGeometry(earthRadius + 0.5, 64, 64);
     const atmosphereMaterial = new THREE.MeshPhongMaterial({
         color: 0x4488ff,
         transparent: true,
@@ -121,36 +124,5 @@ function createEarth() {
     earth.add(atmosphere);
 }
 
-// Создание Солнца с реалистичной текстурой
-function createSun() {
-    const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-    
-    // Локальная текстура Солнца от NASA SDO
-    const sunTexture = new THREE.TextureLoader().load(
-        'textures/sun.jpg',
-        () => {
-            console.log('✅ Текстура Солнца от NASA SDO загружена');
-        },
-        undefined,
-        (error) => {
-            console.error('❌ Ошибка загрузки текстуры Солнца:', error);
-            // Fallback - яркий желтый цвет
-            mesh.material = new THREE.MeshBasicMaterial({
-                color: 0xffaa00,
-                emissive: 0xff6600,
-                emissiveIntensity: 0.5
-            });
-        }
-    );
-    
-    const sunMaterial = new THREE.MeshBasicMaterial({
-        map: sunTexture,
-        color: 0xffff00
-    });
-    const mesh = new THREE.Mesh(sunGeometry, sunMaterial);
-    mesh.position.set(50, 30, 50);
-
-    const sunLight = new THREE.PointLight(0xffff00, 2, 200);
-    mesh.add(sunLight);
-    scene.add(mesh);
-}
+// СОЛНЦЕ УДАЛЕНО - используем только ambient освещение
+// Солнце и его точечное освещение больше не нужны для симуляции

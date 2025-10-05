@@ -32,12 +32,12 @@ async function init() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    // Управление камерой
+    // Управление камерой - ОБНОВЛЕНО для увеличенной Земли (радиус 15)
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.minDistance = 15;
-    controls.maxDistance = 100;
+    controls.minDistance = 20; // Было 15, увеличено для Земли радиусом 15
+    controls.maxDistance = 120; // Было 100
     controls.enablePan = true;
     controls.enableZoom = true;
     controls.touches = {
@@ -45,16 +45,17 @@ async function init() {
         TWO: THREE.TOUCH.DOLLY_PAN
     };
 
-    // Освещение
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    // Освещение - РАВНОМЕРНОЕ для всей Земли (без теней)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2); // Белый свет, яркий
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    sunLight.position.set(50, 30, 50);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
-    scene.add(sunLight);
+    // Убираем directional light - он создает тени
+    // const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    // sunLight.position.set(50, 30, 50);
+    // sunLight.castShadow = true;
+    // sunLight.shadow.mapSize.width = 2048;
+    // sunLight.shadow.mapSize.height = 2048;
+    // scene.add(sunLight);
 
     // Создание звездного фона
     createStarfield();
@@ -62,8 +63,8 @@ async function init() {
     // Создание Земли
     createEarth();
 
-    // Создание Солнца
-    createSun();
+    // Солнце удалено - используем только ambient + directional освещение
+    // createSun(); // УДАЛЕНО
 
     // Обработка изменения размера окна
     window.addEventListener('resize', onWindowResize);
@@ -73,7 +74,7 @@ async function init() {
         initMobile();
     }
 
-    // Загрузка данных NASA
+    // Загрузка данных NASA (online)
     await loadNASAData();
 
     // Обработчики кнопок
@@ -86,7 +87,10 @@ async function init() {
     document.getElementById('set-coordinates').addEventListener('click', setCoordinatesFromInput);
 
     // Скрыть экран загрузки
-    document.getElementById('loading-screen').classList.add('hidden');
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+    }
 
     // Вывод информации о тестировании
     console.log('');

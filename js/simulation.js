@@ -380,6 +380,135 @@ function calculatePlanetaryDefense(diameter, velocity, megatons) {
                         megatons < 100 ? '$500M - $2B' :
                         megatons < 10000 ? '$5-20B' : '$50B+';
     
+    // Real deflection methods based on NASA & ESA research
+    const deflectionMethods = [];
+    
+    if (megatons >= 1) {
+        // Kinetic Impactor (like DART)
+        deflectionMethods.push({
+            name: '🚀 Kinetic Impactor (DART-like)',
+            description: 'Crash spacecraft into asteroid at high speed to change velocity',
+            deltaV: '0.3-3 mm/s',
+            warningTime: '5-15 years',
+            tested: 'YES - DART mission 2022',
+            suitable: megatons < 100,
+            cost: '$300M-$1B'
+        });
+        
+        // Gravity Tractor
+        deflectionMethods.push({
+            name: '🛸 Gravity Tractor',
+            description: 'Spacecraft hovers near asteroid using gravitational pull to slowly alter course',
+            deltaV: '0.01-0.1 mm/s',
+            warningTime: '10-50 years',
+            tested: 'NO - theoretical',
+            suitable: diameter < 100 && megatons < 50,
+            cost: '$1B-$5B'
+        });
+        
+        // Nuclear Stand-off
+        if (megatons >= 10) {
+            deflectionMethods.push({
+                name: '☢️ Nuclear Stand-off Explosion',
+                description: 'Detonate nuclear device NEAR (not on) asteroid to vaporize surface and create thrust',
+                deltaV: '10-100 mm/s',
+                warningTime: '3-10 years',
+                tested: 'NO - proposed by NASA',
+                suitable: megatons < 10000,
+                cost: '$5B-$20B'
+            });
+        }
+        
+        // Ion Beam Shepherd
+        deflectionMethods.push({
+            name: '⚡ Ion Beam Shepherd',
+            description: 'Spacecraft uses ion beam to ablate asteroid surface and create thrust',
+            deltaV: '0.1-1 mm/s',
+            warningTime: '10-30 years',
+            tested: 'NO - concept study',
+            suitable: diameter < 200,
+            cost: '$2B-$8B'
+        });
+    }
+    
+    // Mitigation methods (if deflection fails or impossible)
+    const mitigationMethods = [
+        {
+            name: '🚨 Early Warning System',
+            action: 'Alert population 24-48 hours before impact',
+            lives: 'Can save 50-80% of population in impact zone',
+            cost: '$100M-$500M'
+        },
+        {
+            name: '🏃 Mass Evacuation',
+            action: 'Evacuate population from predicted impact zone',
+            lives: 'Can save 70-95% if sufficient warning time (>1 week)',
+            cost: '$1B-$50B (depending on area)'
+        },
+        {
+            name: '🏗️ Underground Shelters',
+            action: 'Build reinforced bunkers for critical population',
+            lives: 'Protects from thermal radiation and shockwave',
+            cost: '$10B-$100B'
+        },
+        {
+            name: '🌾 Food/Water Stockpiling',
+            action: 'Strategic reserves for post-impact survival',
+            lives: 'Essential for long-term survival after major impact',
+            cost: '$5B-$20B'
+        }
+    ];
+    
+    // Build deflection methods HTML
+    let deflectionHTML = '';
+    if (deflectionMethods.length > 0) {
+        deflectionHTML = `
+        <div style="margin-top: 20px; padding: 15px; background: rgba(50,255,100,0.1); border-radius: 8px; border-left: 3px solid #32ff64;">
+            <strong style="color: #32ff64; font-size: 1.1em;">🛡️ DEFLECTION METHODS (Prevent Impact)</strong><br>
+            <div style="margin-top: 10px;">
+        `;
+        
+        deflectionMethods.forEach(method => {
+            const suitableIcon = method.suitable ? '✅' : '⚠️';
+            const suitableText = method.suitable ? 'SUITABLE' : 'May not be sufficient';
+            deflectionHTML += `
+                <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                    <strong style="color: ${method.suitable ? '#32ff64' : '#ffaa00'};">${suitableIcon} ${method.name}</strong><br>
+                    <span style="font-size: 12px; color: #ccc;">${method.description}</span><br>
+                    <div style="font-size: 11px; margin-top: 5px; color: #aaa;">
+                        • ΔV: ${method.deltaV} | Warning: ${method.warningTime}<br>
+                        • Tested: ${method.tested} | Cost: ${method.cost}<br>
+                        • <strong style="color: ${method.suitable ? '#32ff64' : '#ffaa00'};">${suitableText}</strong>
+                    </div>
+                </div>
+            `;
+        });
+        
+        deflectionHTML += '</div></div>';
+    }
+    
+    // Build mitigation methods HTML
+    let mitigationHTML = `
+        <div style="margin-top: 15px; padding: 15px; background: rgba(255,150,50,0.1); border-radius: 8px; border-left: 3px solid #ff9632;">
+            <strong style="color: #ff9632; font-size: 1.1em;">🆘 MITIGATION METHODS (If Deflection Fails)</strong><br>
+            <div style="margin-top: 10px;">
+    `;
+    
+    mitigationMethods.forEach(method => {
+        mitigationHTML += `
+            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                <strong style="color: #ff9632;">🔹 ${method.name}</strong><br>
+                <span style="font-size: 12px; color: #ccc;">${method.action}</span><br>
+                <div style="font-size: 11px; margin-top: 5px; color: #aaa;">
+                    • Lives Saved: ${method.lives}<br>
+                    • Estimated Cost: ${method.cost}
+                </div>
+            </div>
+        `;
+    });
+    
+    mitigationHTML += '</div></div>';
+    
     defenseData.innerHTML = `
         <div style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
             <h3 style="color: #32ff64; margin-bottom: 10px;">${defenseMethod}</h3>
@@ -406,23 +535,28 @@ function calculatePlanetaryDefense(diameter, velocity, megatons) {
             <span class="detail-value">${megatons < 1 ? '100%' : megatons < 100 ? '70-90%' : megatons < 10000 ? '30-60%' : '<10%'}</span>
         </div>
         
+        ${deflectionHTML}
+        ${mitigationHTML}
+        
         <div style="margin-top: 15px; padding: 12px; background: rgba(100,150,255,0.1); border-radius: 6px; border-left: 3px solid #6496ff;">
-            <strong>🛰️ NASA Programs:</strong><br>
+            <strong>🛰️ NASA/ESA Active Programs:</strong><br>
             <div style="font-size: 13px; color: #aaa; margin-top: 8px; line-height: 1.8;">
-                • <strong>DART</strong> - Successfully changed asteroid orbit (2022)<br>
-                • <strong>NEO Surveyor</strong> - Telescope to find asteroids (launch 2027)<br>
-                • <strong>Planetary Defense Office</strong> - Earth protection coordination<br>
-                • <strong>NEOWs API</strong> - Dangerous objects monitoring
+                • <strong>DART (NASA)</strong> - Kinetic impactor - SUCCESS ✅ (Sep 2022)<br>
+                • <strong>Hera (ESA)</strong> - Post-impact analysis mission (launch 2024)<br>
+                • <strong>NEO Surveyor</strong> - IR telescope for asteroid detection (2027)<br>
+                • <strong>Planetary Defense Office</strong> - Coordination center<br>
+                • <strong>PDCO</strong> - Deflection research & simulation
             </div>
         </div>
         
         <div style="margin-top: 15px; padding: 12px; background: rgba(255,200,50,0.1); border-radius: 6px; border-left: 3px solid #ffc832;">
-            <strong>📊 NASA Statistics:</strong><br>
+            <strong>📊 Real Statistics (NASA/ESA):</strong><br>
             <div style="font-size: 13px; color: #aaa; margin-top: 8px; line-height: 1.8;">
-                • >30,000 near-Earth asteroids discovered<br>
-                • ~150 new found each month<br>
-                • ~2,300 potentially hazardous objects<br>
-                • Major impact probability: once in 100,000 years
+                • >34,000 near-Earth asteroids discovered (2024)<br>
+                • ~150 new NEOs found per month<br>
+                • ~2,300 potentially hazardous asteroids (PHA)<br>
+                • Tunguska-size impact: every ~100 years<br>
+                • Chicxulub-size (dinosaur killer): every ~100M years
             </div>
         </div>
     `;
@@ -433,41 +567,48 @@ function calculatePlanetaryDefense(diameter, velocity, megatons) {
 // Анимация удара с данными в реальном времени
 function animateImpact() {
     // 100% ТОЧНОЕ ПОПАДАНИЕ: Используем ТУ ЖЕ формулу что и в controls.js
-    const earthRadius = 10;
+    const earthRadius = window.earthRadius || 15;
     const lat = impactLocation.lat;
     const lng = impactLocation.lng;
     
     // Конвертируем координаты в радианы
     const latRad = lat * (Math.PI / 180);
-    const lngRad = lng * (Math.PI / 180);
+    const lngRad = -lng * (Math.PI / 180);  // ИНВЕРТИРУЕМ долготу (карта зеркальна)
     
-    // ПРАВИЛЬНАЯ формула - совпадает с controls.js (с вращением Земли)
+    // ФОРМУЛА СИНХРОНИЗИРОВАНА С controls.js (инверсия lng):
+    // X = R*cos(lat)*cos(-lng), Y = R*sin(lat), Z = R*cos(lat)*sin(-lng)
     const endPos = new THREE.Vector3(
-        earthRadius * Math.cos(latRad) * Math.sin(lngRad),   // X
+        earthRadius * Math.cos(latRad) * Math.cos(lngRad),   // X
         earthRadius * Math.sin(latRad),                       // Y
-        -earthRadius * Math.cos(latRad) * Math.cos(lngRad)   // Z (с минусом!)
+        earthRadius * Math.cos(latRad) * Math.sin(lngRad)    // Z
     );
     
-    // ВАЖНО: Астероид должен падать СНАРУЖИ Земли!
-    // Создаем стартовую позицию на линии от центра через точку удара
-    const startDistance = 50; // Расстояние от центра Земли (далеко в космосе)
-    const direction = endPos.clone().normalize();
-    const startPos = direction.multiplyScalar(startDistance);
+    // ПРЯМАЯ ТРАЕКТОРИЯ: Астероид летит по прямой линии к цели (не по дуге!)
+    // Стартовая позиция - далеко в космосе НА ПРЯМОЙ ЛИНИИ от цели
+    const startDistance = 50; // Расстояние от ЦЕЛИ (не от центра!)
+    const direction = endPos.clone().normalize(); // Направление от центра к цели
+    const startPos = endPos.clone().add(direction.multiplyScalar(startDistance)); // Продлеваем линию дальше
     
     // Перемещаем астероид на стартовую позицию
     asteroid.position.copy(startPos);
     
-    console.log('=== НАЧАЛО СИМУЛЯЦИИ (100% ТОЧНОСТЬ) ===');
+    console.log('=== НАЧАЛО СИМУЛЯЦИИ (ПРЯМАЯ ТРАЕКТОРИЯ) ===');
     console.log('Координаты удара:', lat.toFixed(6) + '°', lng.toFixed(6) + '°');
-    console.log('Стартовая позиция астероида (вне Земли):', startPos);
-    console.log('Целевая точка (поверхность Земли):', endPos);
+    console.log('Стартовая позиция (в космосе):', startPos);
+    console.log('Целевая точка (поверхность):', endPos);
+    console.log('Расстояние от центра Земли:', startPos.length().toFixed(2), 'единиц (радиус Земли:', earthRadius + ')');
     console.log('Расстояние до цели:', startPos.distanceTo(endPos).toFixed(2), 'единиц');
+    console.log('✅ Траектория: ПРЯМАЯ ЛИНИЯ к выбранной точке (НЕ ПРОХОДИТ СКВОЗЬ ЗЕМЛЮ)');
     
     const duration = 5000; // 5 секунд
     const startTime = Date.now();
 
     // Создаем индикатор цели (красное кольцо НА ТОЧКЕ УДАРА)
+    // Привязываем к Earth чтобы вращался вместе с планетой!
     if (targetIndicator) {
+        if (targetIndicator.parent) {
+            targetIndicator.parent.remove(targetIndicator);
+        }
         scene.remove(targetIndicator);
     }
     const ringGeometry = new THREE.RingGeometry(0.3, 0.5, 32);
@@ -480,7 +621,7 @@ function animateImpact() {
     targetIndicator = new THREE.Mesh(ringGeometry, ringMaterial);
     targetIndicator.position.copy(endPos); // УСТАНАВЛИВАЕМ НА ТОЧКУ УДАРА
     targetIndicator.lookAt(new THREE.Vector3(0, 0, 0)); // Направляем к центру Земли
-    scene.add(targetIndicator);
+    earth.add(targetIndicator); // ПРИВЯЗЫВАЕМ К ЗЕМЛЕ!
     
     console.log('✅ Индикатор цели установлен на:', endPos);
 
@@ -513,6 +654,15 @@ function animateImpact() {
     }
 
     function updateImpact() {
+        // Дополнительные проверки целостности
+        if (!asteroid) {
+            console.warn('⛔ Asteroid object missing during updateImpact – aborting animation frame');
+            return; // Прерываем если астероид уже удалён
+        }
+        if (!impactLocation) {
+            console.warn('⛔ Impact location missing');
+            return;
+        }
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
@@ -523,24 +673,24 @@ function animateImpact() {
         const gravityFactor = 1 + (progress * progress * 0.5);
 
         // 🌍 КОМПЕНСАЦИЯ ВРАЩЕНИЯ ЗЕМЛИ!
-        // Земля вращается, нужно пересчитать целевую позицию в каждом кадре
-        // Вычисляем сколько Земля повернулась с начала симуляции
-        const earthRotationAngle = window.earthRotationSpeed * (elapsed / (1000 / 60)); // радианы
-        
-        // Пересчитываем конечную точку с учётом вращения
-        // Поворачиваем вокруг оси Y (вращение Земли)
-        const currentEndPos = endPos.clone();
-        currentEndPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), earthRotationAngle);
+        // Земля вращается, целевая точка привязана к Earth и вращается автоматически
+        // Получаем её мировую позицию с учётом вращения
+        const currentEndPos = new THREE.Vector3();
+        if (targetIndicator && targetIndicator.parent) {
+            // Получаем world position маркера (с учётом вращения Earth)
+            targetIndicator.getWorldPosition(currentEndPos);
+        } else {
+            // Fallback: пересчитываем с учётом вращения
+            const earthRotationAngle = window.earthRotationSpeed * (elapsed / (1000 / 60));
+            currentEndPos.copy(endPos);
+            currentEndPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), earthRotationAngle);
+        }
 
         // ТОЧНОЕ ДВИЖЕНИЕ К ДВИЖУЩЕЙСЯ ЦЕЛИ
         asteroid.position.lerpVectors(startPos, currentEndPos, easedProgress);
         
-        // Индикатор тоже вращается вместе с Землёй (он дочерний объект Earth)
+        // Индикатор вращается автоматически как дочерний объект Earth
         if (targetIndicator) {
-            // Обновляем позицию индикатора с учётом вращения
-            targetIndicator.position.copy(currentEndPos);
-            targetIndicator.lookAt(new THREE.Vector3(0, 0, 0));
-            targetIndicator.rotation.y += 0.1; // Дополнительное вращение для анимации
             // Пульсация при приближении
             const scale = 1 + Math.sin(elapsed * 0.01) * 0.2;
             targetIndicator.scale.set(scale, scale, scale);
@@ -636,25 +786,46 @@ function animateImpact() {
         if (progress < 1) {
             requestAnimationFrame(updateImpact);
         } else {
-            // Финальная позиция с учётом вращения
-            const finalRotation = window.earthRotationSpeed * (duration / (1000 / 60));
-            const finalEndPos = endPos.clone();
-            finalEndPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), finalRotation);
+            // ИСПОЛЬЗУЕМ ОРИГИНАЛЬНЫЕ КООРДИНАТЫ impactLocation для точности!
+            // Вычисляем финальную 3D позицию на текущий момент (с учетом вращения Земли)
+            const finalEndPos = new THREE.Vector3();
+            if (targetIndicator && targetIndicator.parent) {
+                targetIndicator.getWorldPosition(finalEndPos);
+            } else {
+                finalEndPos.copy(endPos);
+            }
             
-            // Взрыв при ударе (на движущейся позиции)
+            console.log('💥 === IMPACT MOMENT ===');
+            console.log(`📍 Original coordinates: ${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°`);
+            console.log(`📍 3D impact position: X=${finalEndPos.x.toFixed(3)}, Y=${finalEndPos.y.toFixed(3)}, Z=${finalEndPos.z.toFixed(3)}`);
+            
+            // Взрыв при ударе - передаём финальную позицию
+            // createRealisticExplosion использует impactLocation.lat/lng для кратера!
             createRealisticExplosion(finalEndPos, craterDiameter, kineticEnergy, velocity, diameter);
             scene.remove(asteroid);
             asteroid = null;
             
             // Удалить индикатор цели
             if (targetIndicator) {
+                if (targetIndicator.parent) {
+                    targetIndicator.parent.remove(targetIndicator);
+                }
                 scene.remove(targetIndicator);
                 if (targetIndicator.geometry) targetIndicator.geometry.dispose();
                 if (targetIndicator.material) targetIndicator.material.dispose();
                 targetIndicator = null;
             }
             
-            // НЕ удаляем impactMarker - его больше нет на глобусе, только на карте!
+            // Удалить маркер места падения с глобуса (он уже не нужен - будет кратер)
+            if (impactMarker) {
+                if (impactMarker.parent) {
+                    impactMarker.parent.remove(impactMarker);
+                }
+                scene.remove(impactMarker);
+                if (impactMarker.geometry) impactMarker.geometry.dispose();
+                if (impactMarker.material) impactMarker.material.dispose();
+                impactMarker = null;
+            }
             
             // Remove atmosphere glow
             if (atmosphereGlow) {
@@ -724,7 +895,6 @@ function animateImpact() {
             console.log('🎯 Actual impact coordinates:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
             console.log('📏 Latitude deviation:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
             console.log('📏 Longitude deviation:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');
-            console.log('🔄 Earth rotation during fall:', (finalRotation * 180 / Math.PI).toFixed(2) + '°');
             console.log('✅ Crater position in 3D:', finalEndPos);
             
             if (Math.abs(impactLocation.lat - verifyLat) < 0.001 && Math.abs(impactLocation.lng - verifyLng) < 0.001) {
@@ -752,7 +922,12 @@ function resetSimulation() {
         targetIndicator = null;
     }
 
-    // НЕ удаляем impactMarker - его больше нет на глобусе, только на карте!
+    if (impactMarker) {
+        earth.remove(impactMarker);
+        if (impactMarker.geometry) impactMarker.geometry.dispose();
+        if (impactMarker.material) impactMarker.material.dispose();
+        impactMarker = null;
+    }
 
     // REMOVE CRATER on reset - clean slate for new simulation
     if (crater) {

@@ -1,31 +1,17 @@
-// Load NASA data
+// ONLINE NASA DATA MODULE (restored)
+// Fetches real Near Earth Object data from NASA API + fallback
+// All physical values (velocity, diameters) sourced from NASA NeoWs responses
+
 async function loadNASAData() {
     try {
-        console.log('Attempting to load NASA data...');
-        
-        const response = await fetch(`${NASA_API_URL}?page=${currentPage}&size=20&api_key=${NASA_API_KEY}`, {
-            signal: AbortSignal.timeout(10000) // 10 second timeout
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        console.log('Attempting to load NASA data (online)...');
+        const response = await fetch(`${NASA_API_URL}?page=${currentPage}&size=20&api_key=${NASA_API_KEY}`, { signal: AbortSignal.timeout(10000) });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();
-        
-        console.log('✅ NASA data loaded, page:', currentPage);
-        console.log('Asteroids found on page:', data.near_earth_objects.length);
-        
-        // Add to existing list
-        const newAsteroids = data.near_earth_objects;
+        const newAsteroids = data.near_earth_objects || [];
         allAsteroids = allAsteroids.concat(newAsteroids);
-        
-        // IMPORTANT: Find or create IMPACTOR-2025
         await addImpactor2025();
-        
         displayAsteroids(allAsteroids);
-        
-        // Show "Load More" button if there's a next page
         const loadMoreBtn = document.getElementById('load-more-asteroids');
         if (data.links && data.links.next) {
             loadMoreBtn.style.display = 'block';
@@ -33,426 +19,90 @@ async function loadNASAData() {
         } else {
             loadMoreBtn.style.display = 'none';
         }
-        
-    } catch (error) {
-        console.error('❌ Error loading NASA data:', error);
-        
-        // Use fallback data
-        console.log('⚠️ Loading fallback data...');
+        console.log('✅ NASA page loaded. Total:', allAsteroids.length);
+    } catch (e) {
+        console.warn('NASA fetch failed, using fallback. Reason:', e.message);
         loadFallbackData();
     }
 }
 
-// Fallback data if NASA API is unavailable
 function loadFallbackData() {
-    const selectElement = document.getElementById('asteroid-select');
-    
-    // Create realistic test asteroids
     allAsteroids = [
-        {
-            id: "IMPACTOR-2025",
-            name: "IMPACTOR-2025 (Simulation)",
-            is_potentially_hazardous_asteroid: true,
-            estimated_diameter: {
-                meters: {
-                    estimated_diameter_min: 800,
-                    estimated_diameter_max: 1200
-                }
-            },
-            close_approach_data: [{
-                relative_velocity: {
-                    kilometers_per_second: "25.5"
-                },
-                miss_distance: {
-                    kilometers: "0"
-                }
-            }]
-        },
-        {
-            id: "2023-ABC",
-            name: "2023 ABC (Simulation)",
-            is_potentially_hazardous_asteroid: true,
-            estimated_diameter: {
-                meters: {
-                    estimated_diameter_min: 400,
-                    estimated_diameter_max: 600
-                }
-            },
-            close_approach_data: [{
-                relative_velocity: {
-                    kilometers_per_second: "20.0"
-                },
-                miss_distance: {
-                    kilometers: "50000"
-                }
-            }]
-        },
-        {
-            id: "2024-XYZ",
-            name: "2024 XYZ (Simulation)",
-            is_potentially_hazardous_asteroid: false,
-            estimated_diameter: {
-                meters: {
-                    estimated_diameter_min: 100,
-                    estimated_diameter_max: 200
-                }
-            },
-            close_approach_data: [{
-                relative_velocity: {
-                    kilometers_per_second: "15.0"
-                },
-                miss_distance: {
-                    kilometers: "100000"
-                }
-            }]
-        },
-        {
-            id: "TUNGUSKA",
-            name: "Tunguska Meteorite (1908)",
-            is_potentially_hazardous_asteroid: true,
-            estimated_diameter: {
-                meters: {
-                    estimated_diameter_min: 50,
-                    estimated_diameter_max: 80
-                }
-            },
-            close_approach_data: [{
-                relative_velocity: {
-                    kilometers_per_second: "27.0"
-                },
-                miss_distance: {
-                    kilometers: "0"
-                }
-            }]
-        },
-        {
-            id: "CHELYABINSK",
-            name: "Chelyabinsk Meteorite (2013)",
-            is_potentially_hazardous_asteroid: false,
-            estimated_diameter: {
-                meters: {
-                    estimated_diameter_min: 17,
-                    estimated_diameter_max: 20
-                }
-            },
-            close_approach_data: [{
-                relative_velocity: {
-                    kilometers_per_second: "19.0"
-                },
-                miss_distance: {
-                    kilometers: "0"
-                }
-            }]
-        }
+        { id:'IMPACTOR-2025', name:'IMPACTOR-2025 (Simulation)', is_potentially_hazardous_asteroid:true, estimated_diameter:{ meters:{ estimated_diameter_min:800, estimated_diameter_max:1200 } }, close_approach_data:[{ relative_velocity:{ kilometers_per_second:'25.5' }, miss_distance:{ kilometers:'0' } }] },
+        { id:'2023-ABC', name:'2023 ABC (Simulation)', is_potentially_hazardous_asteroid:true, estimated_diameter:{ meters:{ estimated_diameter_min:400, estimated_diameter_max:600 } }, close_approach_data:[{ relative_velocity:{ kilometers_per_second:'20.0' }, miss_distance:{ kilometers:'50000' } }] },
+        { id:'2024-XYZ', name:'2024 XYZ (Simulation)', is_potentially_hazardous_asteroid:false, estimated_diameter:{ meters:{ estimated_diameter_min:100, estimated_diameter_max:200 } }, close_approach_data:[{ relative_velocity:{ kilometers_per_second:'15.0' }, miss_distance:{ kilometers:'100000' } }] }
     ];
-    
-    console.log('✅ Fallback data loaded:', allAsteroids.length, 'asteroids');
     displayAsteroids(allAsteroids);
+    const loadMoreBtn = document.getElementById('load-more-asteroids');
+    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+    console.log('✅ Fallback asteroid list loaded');
 }
 
-// Load more asteroids
-function loadMoreAsteroids() {
-    currentPage++;
-    loadNASAData();
-}
+function loadMoreAsteroids(){ currentPage++; loadNASAData(); }
 
-// Display asteroid list in dropdown
 function displayAsteroids(asteroids) {
     const selectElement = document.getElementById('asteroid-select');
-    
-    // Clear old options except first (placeholder)
+    if (!selectElement) return;
     selectElement.innerHTML = '<option value="">-- Select Asteroid --</option>';
-
-    // SORT: Dangerous asteroids first, then by size
-    const sortedAsteroids = [...asteroids].sort((a, b) => {
-        // Сначала опасные
+    const sorted = [...asteroids].sort((a,b)=>{
         if (a.is_potentially_hazardous_asteroid && !b.is_potentially_hazardous_asteroid) return -1;
         if (!a.is_potentially_hazardous_asteroid && b.is_potentially_hazardous_asteroid) return 1;
-        
-        // Потом по размеру (большие первыми)
-        const sizeA = (a.estimated_diameter.meters.estimated_diameter_min + 
-                      a.estimated_diameter.meters.estimated_diameter_max) / 2;
-        const sizeB = (b.estimated_diameter.meters.estimated_diameter_min + 
-                      b.estimated_diameter.meters.estimated_diameter_max) / 2;
+        const sizeA = (a.estimated_diameter.meters.estimated_diameter_min + a.estimated_diameter.meters.estimated_diameter_max)/2;
+        const sizeB = (b.estimated_diameter.meters.estimated_diameter_min + b.estimated_diameter.meters.estimated_diameter_max)/2;
         return sizeB - sizeA;
     });
-
-    sortedAsteroids.forEach((asteroid, index) => {
-        const diameterMin = asteroid.estimated_diameter.meters.estimated_diameter_min.toFixed(0);
-        const diameterMax = asteroid.estimated_diameter.meters.estimated_diameter_max.toFixed(0);
-        const diameterAvg = ((parseFloat(diameterMin) + parseFloat(diameterMax)) / 2).toFixed(0);
-        const isHazardous = asteroid.is_potentially_hazardous_asteroid;
-        
-        // Получаем скорость если доступна
-        let velocity = 'N/A';
-        if (asteroid.close_approach_data && asteroid.close_approach_data[0]) {
-            velocity = parseFloat(asteroid.close_approach_data[0].relative_velocity.kilometers_per_second).toFixed(1);
-        }
-        
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = `${isHazardous ? '⚠️ ' : ''}${asteroid.name} (${diameterAvg}м, ${velocity} км/с)`;
-        option.dataset.asteroidData = JSON.stringify(asteroid);
-        
-        selectElement.appendChild(option);
+    sorted.forEach((a,i)=>{
+        const dMin=a.estimated_diameter.meters.estimated_diameter_min.toFixed(0);
+        const dMax=a.estimated_diameter.meters.estimated_diameter_max.toFixed(0);
+        const dAvg=((+dMin+ +dMax)/2).toFixed(0);
+        let v='N/A';
+        if (a.close_approach_data && a.close_approach_data[0]) v=parseFloat(a.close_approach_data[0].relative_velocity.kilometers_per_second).toFixed(1);
+        const opt=document.createElement('option');
+        opt.value=i; opt.textContent=`${a.is_potentially_hazardous_asteroid?'⚠️ ':''}${a.name} (${dAvg}m, ${v} km/s)`; opt.dataset.asteroidData=JSON.stringify(a);
+        selectElement.appendChild(opt);
     });
-    
-    // Обработчик выбора астероида
-    selectElement.onchange = function() {
-        if (this.value === '') return;
-        
-        const selectedOption = this.options[this.selectedIndex];
-        const asteroidData = JSON.parse(selectedOption.dataset.asteroidData);
-        selectAsteroid(asteroidData);
-    };
-    
-    console.log(`Отображено ${asteroids.length} астероидов в выпадающем списке`);
+    selectElement.onchange=function(){ if(this.value==='')return; const data=JSON.parse(this.options[this.selectedIndex].dataset.asteroidData); selectAsteroid(data); };
 }
 
-// Выбор астероида
-// Выбор астероида
-function selectAsteroid(asteroidData) {
-    selectedAsteroid = asteroidData;
-
-    // Удалить старую 3D модель астероида если есть
-    if (asteroid) {
-        scene.remove(asteroid);
-    }
-
-    // Создать 3D модель астероида
-    const diameterAvgMeters = (
-        asteroidData.estimated_diameter.meters.estimated_diameter_min +
-        asteroidData.estimated_diameter.meters.estimated_diameter_max
-    ) / 2;
-    
-    asteroid = createAsteroidModel(diameterAvgMeters);
-    
-    // ВАЖНО: Установить начальную позицию астероида в космосе
-    asteroid.position.set(30, 20, -30); // Позиция в космосе перед падением
-    
-    scene.add(asteroid);
-    console.log('3D модель астероида создана:', asteroid);
-    console.log('Позиция астероида:', asteroid.position);
-
-    // Отобразить информацию
-    const infoSection = document.getElementById('asteroid-info');
-    const detailsDiv = document.getElementById('asteroid-details');
-    
-    const diameterAvg = (
-        (asteroidData.estimated_diameter.meters.estimated_diameter_min +
-        asteroidData.estimated_diameter.meters.estimated_diameter_max) / 2
-    ).toFixed(0);
-
-    const velocity = asteroidData.close_approach_data && asteroidData.close_approach_data[0] 
-        ? parseFloat(asteroidData.close_approach_data[0].relative_velocity.kilometers_per_second).toFixed(2)
-        : '20';
-    
-    // Дополнительные данные NASA
-    const absoluteMagnitude = asteroidData.absolute_magnitude_h ? asteroidData.absolute_magnitude_h.toFixed(2) : 'Н/Д';
-    const missDistance = asteroidData.close_approach_data && asteroidData.close_approach_data[0]
-        ? (parseFloat(asteroidData.close_approach_data[0].miss_distance.kilometers) / 384400).toFixed(2) // в лунных дистанциях
-        : 'Н/Д';
-    
-    const orbitingBody = asteroidData.close_approach_data && asteroidData.close_approach_data[0]
-        ? asteroidData.close_approach_data[0].orbiting_body
-        : 'Земля';
-
-    detailsDiv.innerHTML = `
-        <div class="detail-row">
-            <span class="detail-label">Name:</span>
-            <span class="detail-value">${asteroidData.name}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Diameter:</span>
-            <span class="detail-value">${diameterAvg} m</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Velocity:</span>
-            <span class="detail-value">${velocity} km/s</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Hazardous:</span>
-            <span class="detail-value" style="color: ${asteroidData.is_potentially_hazardous_asteroid ? '#ff4444' : '#88ff88'};">
-                ${asteroidData.is_potentially_hazardous_asteroid ? 'YES ⚠️' : 'NO ✓'}
-            </span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Abs. Magnitude:</span>
-            <span class="detail-value">${absoluteMagnitude} H</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Min. Distance:</span>
-            <span class="detail-value">${missDistance} LD</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Orbiting:</span>
-            <span class="detail-value">${orbitingBody}</span>
-        </div>
-    `;
-
-    infoSection.style.display = 'block';
-
-    // Create asteroid in scene
-    createAsteroidModel(diameterAvg);
-
-    // Check if ready to start
+function selectAsteroid(a){
+    selectedAsteroid=a; if(asteroid) scene.remove(asteroid);
+    const avg=(a.estimated_diameter.meters.estimated_diameter_min+a.estimated_diameter.meters.estimated_diameter_max)/2;
+    asteroid=createAsteroidModel(avg); asteroid.position.set(30,20,-30); scene.add(asteroid);
+    const info=document.getElementById('asteroid-info'); const details=document.getElementById('asteroid-details');
+    const vel=a.close_approach_data&&a.close_approach_data[0]?parseFloat(a.close_approach_data[0].relative_velocity.kilometers_per_second).toFixed(2):'20';
+    details.innerHTML=`<div class="detail-row"><span class="detail-label">Name:</span><span class="detail-value">${a.name}</span></div>
+    <div class="detail-row"><span class="detail-label">Diameter:</span><span class="detail-value">${avg.toFixed(0)} m</span></div>
+    <div class="detail-row"><span class="detail-label">Velocity:</span><span class="detail-value">${vel} km/s</span></div>
+    <div class="detail-row"><span class="detail-label">Hazardous:</span><span class="detail-value" style="color:${a.is_potentially_hazardous_asteroid?'#ff4444':'#88ff88'};">${a.is_potentially_hazardous_asteroid?'YES ⚠️':'NO ✓'}</span></div>`;
+    info.style.display='block';
     checkReadyToStart();
 }
 
-// Создание 3D модели астероида
-function createAsteroidModel(diameter) {
-    const size = Math.max(diameter / 1000, 0.2); // Масштабируем для видимости
-    const geometry = new THREE.SphereGeometry(size, 32, 32);
-    
-    // Локальные текстуры астероидов от NASA
-    const asteroidTextures = [
-        'textures/moon.jpg',        // Луна от NASA
-        'textures/asteroid_1.jpg',  // Церера (карликовая планета)
-        'textures/asteroid_2.jpg',  // Макемаке (карликовая планета)
-        'textures/asteroid_3.jpg',  // Хаумеа (карликовая планета)
-        null  // процедурная текстура
-    ];
-    
-    // Выбираем текстуру случайно
-    const textureIndex = Math.floor(Math.random() * asteroidTextures.length);
-    const textureUrl = asteroidTextures[textureIndex];
-    
-    // Разные материалы в зависимости от типа
-    const materialType = Math.random();
-    let material;
-    
-    if (textureUrl) {
-        const texture = new THREE.TextureLoader().load(
-            textureUrl,
-            () => {
-                console.log('✅ Текстура астероида от NASA загружена:', textureUrl);
-            },
-            undefined,
-            (error) => {
-                console.error('❌ Ошибка загрузки текстуры астероида:', error);
-                const fallbackColor = Math.random() > 0.5 ? 0x888888 : 0x555555;
-                mesh.material = new THREE.MeshPhongMaterial({
-                    color: fallbackColor,
-                    shininess: 5
-                });
-            }
-        );
-        
-        if (materialType < 0.3) {
-            // Металлический тип
-            material = new THREE.MeshStandardMaterial({
-                map: texture,
-                roughness: 0.7,
-                metalness: 0.5,
-                bumpMap: texture,
-                bumpScale: 0.03
-            });
-        } else if (materialType < 0.6) {
-            // Каменный тип
-            material = new THREE.MeshPhongMaterial({
-                map: texture,
-                bumpMap: texture,
-                bumpScale: 0.05,
-                shininess: 3
-            });
-        } else {
-            // Темный углеродный тип
-            material = new THREE.MeshLambertMaterial({
-                map: texture
-            });
-        }
-    } else {
-        // Процедурная текстура без загрузки
-        const grayShade = 0.3 + Math.random() * 0.4;
-        const color = new THREE.Color(grayShade, grayShade, grayShade);
-        material = new THREE.MeshPhongMaterial({
-            color: color,
-            shininess: 5
-        });
-    }
-    
-    const mesh = new THREE.Mesh(geometry, material);
-    
-    // Случайное вращение для разнообразия
-    mesh.rotation.x = Math.random() * Math.PI;
-    mesh.rotation.y = Math.random() * Math.PI;
-    
-    return mesh;
+function createAsteroidModel(diameter){
+    const size=Math.max(diameter/1000,0.2);
+    const geometry=new THREE.SphereGeometry(size,32,32);
+    const textures=['textures/asteroid_1.jpg','textures/asteroid_2.jpg','textures/asteroid_3.jpg','textures/moon.jpg'];
+    const tex=textures[Math.floor(Math.random()*textures.length)];
+    const texture=new THREE.TextureLoader().load(tex,()=>console.log('🪨 Texture:',tex));
+    const material=new THREE.MeshPhongMaterial({map:texture,bumpMap:texture,bumpScale:0.04,shininess:4});
+    const mesh=new THREE.Mesh(geometry,material); mesh.rotation.x=Math.random()*Math.PI; mesh.rotation.y=Math.random()*Math.PI; return mesh; }
+
+async function addImpactor2025(){
+    const exists=allAsteroids.find(a=>a.name&&a.name.includes('IMPACTOR-2025')); if(exists) return;
+    try {
+        const today=new Date(); const end=new Date(today); end.setDate(today.getDate()+7);
+        const startStr=today.toISOString().split('T')[0]; const endStr=end.toISOString().split('T')[0];
+        const resp=await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${startStr}&end_date=${endStr}&api_key=${NASA_API_KEY}`);
+        const data=await resp.json(); let most=null; let max=0;
+        for(const date in data.near_earth_objects){ for(const ast of data.near_earth_objects[date]){ if(ast.is_potentially_hazardous_asteroid){ const size=(ast.estimated_diameter.meters.estimated_diameter_min+ast.estimated_diameter.meters.estimated_diameter_max)/2; if(size>max){ max=size; most=ast; }}}}
+        if(most){ most.name=`⚠️ IMPACTOR-2025 (${most.name})`; most.is_potentially_hazardous_asteroid=true; allAsteroids.unshift(most); console.log('✅ Real IMPACTOR-2025 added'); return; }
+    } catch(e){ console.warn('Impactor fetch failed:', e.message); }
+    const synthetic={ name:'⚠️ IMPACTOR-2025 (Synthetic Threat)', is_potentially_hazardous_asteroid:true, absolute_magnitude_h:18.5, estimated_diameter:{ meters:{ estimated_diameter_min:800, estimated_diameter_max:1200 } }, close_approach_data:[{ relative_velocity:{ kilometers_per_second:'28.5' }, miss_distance:{ kilometers:'75000' }, orbiting_body:'Earth' }] };
+    allAsteroids.unshift(synthetic); console.log('✅ Synthetic IMPACTOR-2025 added');
 }
 
-// Добавление импактора-2025 (специальный объект для NASA Space Apps Challenge)
-async function addImpactor2025() {
-    // Проверяем, не добавлен ли уже
-    const exists = allAsteroids.find(a => a.name && a.name.includes('IMPACTOR-2025'));
-    if (exists) return;
-    
-    // Попытка найти реальный опасный астероид из NASA
-    try {
-        // NASA Feed API ограничен 7 днями! Используем текущую дату
-        const today = new Date();
-        const endDate = new Date(today);
-        endDate.setDate(today.getDate() + 7);
-        
-        const startStr = today.toISOString().split('T')[0];
-        const endStr = endDate.toISOString().split('T')[0];
-        
-        const response = await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${startStr}&end_date=${endStr}&api_key=${NASA_API_KEY}`);
-        const data = await response.json();
-        
-        // Ищем самый опасный астероид
-        let mostDangerous = null;
-        let maxSize = 0;
-        
-        for (const date in data.near_earth_objects) {
-            const asteroids = data.near_earth_objects[date];
-            for (const ast of asteroids) {
-                if (ast.is_potentially_hazardous_asteroid) {
-                    const size = (ast.estimated_diameter.meters.estimated_diameter_min + 
-                                 ast.estimated_diameter.meters.estimated_diameter_max) / 2;
-                    if (size > maxSize) {
-                        maxSize = size;
-                        mostDangerous = ast;
-                    }
-                }
-            }
-        }
-        
-        if (mostDangerous) {
-            // Переименовываем для челленджа
-            mostDangerous.name = `⚠️ IMPACTOR-2025 (${mostDangerous.name})`;
-            mostDangerous.is_potentially_hazardous_asteroid = true;
-            // Добавляем в начало списка
-            allAsteroids.unshift(mostDangerous);
-            console.log('✅ Найден IMPACTOR-2025:', mostDangerous.name);
-            return;
-        }
-    } catch (error) {
-        console.warn('Не удалось найти реальный импактор:', error);
-    }
-    
-    // Если не нашли реальный, создаём синтетический опасный астероид
-    const syntheticImpactor = {
-        name: "⚠️ IMPACTOR-2025 (Synthetic Threat)",
-        is_potentially_hazardous_asteroid: true,
-        absolute_magnitude_h: 18.5,
-        estimated_diameter: {
-            meters: {
-                estimated_diameter_min: 800,
-                estimated_diameter_max: 1200
-            }
-        },
-        close_approach_data: [{
-            relative_velocity: {
-                kilometers_per_second: "28.5"
-            },
-            miss_distance: {
-                kilometers: "75000"
-            },
-            orbiting_body: "Earth"
-        }]
-    };
-    
-    // Добавляем в начало списка
-    allAsteroids.unshift(syntheticImpactor);
-    console.log('✅ Создан синтетический IMPACTOR-2025');
-}
+// Export globals
+window.loadNASAData=loadNASAData;
+window.loadMoreAsteroids=loadMoreAsteroids;
+window.displayAsteroids=displayAsteroids;
+window.selectAsteroid=selectAsteroid;

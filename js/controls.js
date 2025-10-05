@@ -21,79 +21,40 @@ function setCoordinatesFromInput() {
     setImpactLocation(latInput, lngInput);
 }
 
-// Установка места падения - ПОЛНОСТЬЮ ИСПРАВЛЕНО v4
+// Установка места падения - СИНХРОНИЗИРОВАНО С КАРТОЙ И ТЕКСТУРОЙ
 function setImpactLocation(lat, lng, point = null) {
     impactLocation = { lat, lng };
-
-    // Обновить UI
     document.getElementById('lat').textContent = lat.toFixed(2) + '°';
     document.getElementById('lng').textContent = lng.toFixed(2) + '°';
     document.getElementById('lat-input').value = lat.toFixed(2);
     document.getElementById('lng-input').value = lng.toFixed(2);
 
-    // ИСПРАВЛЕННАЯ ФОРМУЛА для совпадения с картой
-    // Стандартная сферическая система координат для equirectangular текстуры
-    const radius = 10; // Радиус Земли в модели
+    const radius = window.earthRadius || 15;
     const latRad = lat * Math.PI / 180;
-    const lngRad = lng * Math.PI / 180;
+    const lngRad = -lng * Math.PI / 180;  // ИНВЕРТИРУЕМ долготу! Карта зеркальна к текстуре
 
-    // ВАЖНО: Текстура сдвинута на offset.x = 0.5, но координаты стандартные
-    // Формула остаётся прежней, т.к. сдвиг только визуальный (в UV-пространстве)
-    // 0° lng → -Z ось (Гринвич спереди благодаря offset.x)
+    // ПРАВИЛЬНАЯ ФОРМУЛА для Equirectangular текстуры (стандарт NASA Blue Marble)
+    // lng=0° (Greenwich) смотрит на +X
+    // lng=90°E (карта) → -90° (3D) смотрит на -Z
+    // lng=-90°W (карта) → +90° (3D) смотрит на +Z
     const localPoint = new THREE.Vector3(
-        radius * Math.cos(latRad) * Math.sin(lngRad),
-        radius * Math.sin(latRad),
-        -radius * Math.cos(latRad) * Math.cos(lngRad)  // Минус для правильной ориентации
+        radius * Math.cos(latRad) * Math.cos(lngRad),   // X = R*cos(lat)*cos(-lng)
+        radius * Math.sin(latRad),                        // Y = R*sin(lat)
+        radius * Math.cos(latRad) * Math.sin(lngRad)    // Z = R*cos(lat)*sin(-lng)
     );
     impactLocation.point = localPoint;
 
-    // Верификация (обратное преобразование):
+    // Обратная проверка
     const verifyLat = Math.asin(localPoint.y / radius) * 180 / Math.PI;
-    const verifyLng = Math.atan2(localPoint.x, -localPoint.z) * 180 / Math.PI;
-    console.log(`🔍 VERIFICATION (new orientation): Lat=${verifyLat.toFixed(6)}°, Lng=${verifyLng.toFixed(6)}°`);
-    console.log(`📏 Deviation: Lat=${Math.abs(lat - verifyLat).toFixed(8)}°, Lng=${Math.abs(lng - verifyLng).toFixed(8)}°`);
-    
-    if (Math.abs(lat - verifyLat) > 0.001 || Math.abs(lng - verifyLng) > 0.001) {
-        console.warn('⚠️ Coordinate mismatch detected!');
-    } else {
-        console.log('✅ Coordinates verified - perfect match!');
-    }
+    const verifyLng = -Math.atan2(localPoint.z, localPoint.x) * 180 / Math.PI;  // Обратная инверсия
+    const dLat = Math.abs(lat - verifyLat);
+    const dLng = Math.abs(lng - verifyLng);
+    console.log(`🔍 VERIFY: ${verifyLat.toFixed(5)}°, ${verifyLng.toFixed(5)}°  ΔLat=${dLat.toFixed(5)} ΔLng=${dLng.toFixed(5)}`);
 
-    // НЕ создаем маркер на глобусе - он будет только на карте!
-    // Удаляем старый маркер с глобуса если он есть
-    if (impactMarker) {
-        // Правильно удаляем старый маркер
-        if (impactMarker.parent) {
-            impactMarker.parent.remove(impactMarker);
-        }
-        // Очищаем геометрию и материалы
-        if (impactMarker.geometry) impactMarker.geometry.dispose();
-        if (impactMarker.material) {
-            if (Array.isArray(impactMarker.material)) {
-                impactMarker.material.forEach(mat => mat.dispose());
-            } else {
-                impactMarker.material.dispose();
-            }
-        }
-        // Очищаем дочерние объекты (кольцо)
-        impactMarker.traverse((child) => {
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) {
-                if (Array.isArray(child.material)) {
-                    child.material.forEach(mat => mat.dispose());
-                } else {
-                    child.material.dispose();
-                }
-            }
-        });
-        impactMarker = null;
-    }
-    
-    console.log(`🌍 Impact target set at ${lat.toFixed(4)}°, ${lng.toFixed(4)}° (marker only on map, NOT on globe)`);
+    console.log(`🌍 Impact set: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`📍 3D point: X=${localPoint.x.toFixed(3)}, Y=${localPoint.y.toFixed(3)}, Z=${localPoint.z.toFixed(3)}`);
 
-    // Обновить маркер на карте
     updateMapMarker(lat, lng);
-
     checkReadyToStart();
 }
 
@@ -112,19 +73,19 @@ function testCoordinates() {
         { name: 'Сидней (33.9°S, 151.2°E)', lat: -33.9, lng: 151.2 }
     ];
     
-    const radius = 10;
+    const radius = window.earthRadius || 15;
     testPoints.forEach(point => {
         const latRad = point.lat * (Math.PI / 180);
-        const lngRad = point.lng * (Math.PI / 180);
+        const lngRad = -point.lng * (Math.PI / 180);  // ИНВЕРТИРУЕМ
         
-        // Формула с минусом для -Z (правильная ориентация)
+        // ИНВЕРТИРОВАННАЯ ФОРМУЛА: -lng
         const pos = new THREE.Vector3(
-            radius * Math.cos(latRad) * Math.sin(lngRad),
+            radius * Math.cos(latRad) * Math.cos(lngRad),
             radius * Math.sin(latRad),
-            -radius * Math.cos(latRad) * Math.cos(lngRad)
+            radius * Math.cos(latRad) * Math.sin(lngRad)
         );
         const verifyLat = Math.asin(pos.y / radius) * 180 / Math.PI;
-        const verifyLng = Math.atan2(pos.x, -pos.z) * 180 / Math.PI;
+        const verifyLng = -Math.atan2(pos.z, pos.x) * 180 / Math.PI;  // Обратная инверсия
         
         console.log(`${point.name}:`);
         console.log(`  3D: X=${pos.x.toFixed(3)}, Y=${pos.y.toFixed(3)}, Z=${pos.z.toFixed(3)}`);
@@ -148,21 +109,21 @@ function showTestMarkers() {
     ];
     
     testCities.forEach(city => {
-        const radius = 10;
+        const radius = window.earthRadius || 15;
         const latRad = city.lat * (Math.PI / 180);
-        const lngRad = city.lng * (Math.PI / 180);
+        const lngRad = -city.lng * (Math.PI / 180);  // ИНВЕРТИРУЕМ
         
-        // Формула с минусом для -Z
+        // ИНВЕРТИРОВАННАЯ ФОРМУЛА: -lng
         const pos = new THREE.Vector3(
-            radius * Math.cos(latRad) * Math.sin(lngRad),
+            radius * Math.cos(latRad) * Math.cos(lngRad),
             radius * Math.sin(latRad),
-            -radius * Math.cos(latRad) * Math.cos(lngRad)
+            radius * Math.cos(latRad) * Math.sin(lngRad)
         );
         
-        const markerGeo = new THREE.SphereGeometry(0.3, 16, 16);
+        const markerGeo = new THREE.SphereGeometry(0.4, 16, 16); // Увеличен размер
         const markerMat = new THREE.MeshBasicMaterial({ color: city.color });
         const marker = new THREE.Mesh(markerGeo, markerMat);
-        marker.position.copy(pos).normalize().multiplyScalar(10.3);
+        marker.position.copy(pos).normalize().multiplyScalar(radius + 0.4);
         marker.name = `test-marker-${city.name}`;
         earth.add(marker);
         
@@ -189,8 +150,8 @@ window.clearTestMarkers = clearTestMarkers;
 // Проверка готовности к запуску
 function checkReadyToStart() {
     const startButton = document.getElementById('start-simulation');
-    // Проверяем наличие астероида и координат (не нужен impactMarker на глобусе)
-    if (selectedAsteroid && impactLocation && impactLocation.lat !== undefined) {
+    // Проверяем наличие астероида и координат удара (маркер только на карте, не на глобусе!)
+    if (selectedAsteroid && impactLocation) {
         startButton.disabled = false;
     }
 }
