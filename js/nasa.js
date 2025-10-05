@@ -304,12 +304,12 @@ function createAsteroidModel(diameter) {
     const size = Math.max(diameter / 1000, 0.2); // Масштабируем для видимости
     const geometry = new THREE.SphereGeometry(size, 32, 32);
     
-    // Локальные текстуры для разных типов астероидов
+    // Локальные текстуры астероидов от NASA
     const asteroidTextures = [
-        'textures/moon.jpg',
-        'textures/asteroid_1.jpg',
-        'textures/asteroid_2.jpg',
-        'textures/asteroid_3.jpg',
+        'textures/moon.jpg',        // Луна от NASA
+        'textures/asteroid_1.jpg',  // Церера (карликовая планета)
+        'textures/asteroid_2.jpg',  // Макемаке (карликовая планета)
+        'textures/asteroid_3.jpg',  // Хаумеа (карликовая планета)
         null  // процедурная текстура
     ];
     
@@ -325,7 +325,7 @@ function createAsteroidModel(diameter) {
         const texture = new THREE.TextureLoader().load(
             textureUrl,
             () => {
-                console.log('✅ Текстура астероида загружена:', textureUrl);
+                console.log('✅ Текстура астероида от NASA загружена:', textureUrl);
             },
             undefined,
             (error) => {

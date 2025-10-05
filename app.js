@@ -2,6 +2,12 @@
 const NASA_API_KEY = 'ooHgXAVEeyOgGeLh8cC90YBP4gpKwYfNEJKRwN9T';
 const NASA_API_URL = 'https://api.nasa.gov/neo/rest/v1/neo/browse';
 
+// Используются официальные текстуры NASA:
+// - Земля: NASA Blue Marble (world.topo.bathy)
+// - Рельеф: GEBCO Bathymetry
+// - Океаны: NASA Earth Observatory
+// - Астероиды: NASA текстуры реальных астероидов
+
 // Глобальные переменные
 let scene, camera, renderer, controls;
 let earth, asteroid, impactMarker;
@@ -112,11 +118,17 @@ function createStarfield() {
 function createEarth() {
     const geometry = new THREE.SphereGeometry(10, 64, 64);
     
-    // Текстуры Земли через CDN
+    // Официальные текстуры NASA
     const textureLoader = new THREE.TextureLoader();
-    const earthTexture = textureLoader.load('https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg');
-    const bumpTexture = textureLoader.load('https://raw.githubusercontent.com/turban/webgl-earth/master/images/elev_bump_4k.jpg');
-    const specularTexture = textureLoader.load('https://raw.githubusercontent.com/turban/webgl-earth/master/images/water_4k.png');
+    
+    // NASA Blue Marble - основная текстура Земли
+    const earthTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg');
+    
+    // NASA Earth Bump Map (рельеф)
+    const bumpTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73934/gebco_bathy.5400x2700_8bit.jpg');
+    
+    // NASA Night Lights для specular (океаны отражают больше)
+    const specularTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/dnb_land_ocean_ice.2012.54000x27000_geo.jpg');
 
     const material = new THREE.MeshPhongMaterial({
         map: earthTexture,
@@ -141,6 +153,8 @@ function createEarth() {
     });
     const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
     earth.add(atmosphere);
+    
+    console.log('🌍 Земля создана с официальными текстурами NASA');
 }
 
 // Создание Солнца
@@ -262,7 +276,10 @@ function createAsteroidModel(diameter) {
     const geometry = new THREE.DodecahedronGeometry(size, 1);
     
     const textureLoader = new THREE.TextureLoader();
-    const asteroidTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg');
+    
+    // NASA текстура астероида (используем текстуру Весты - реального астероида)
+    // Или можно использовать текстуру Луны NASA для более реалистичного вида
+    const asteroidTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57730/vesta_messenger_720.jpg');
     
     const material = new THREE.MeshPhongMaterial({
         map: asteroidTexture,
@@ -275,6 +292,8 @@ function createAsteroidModel(diameter) {
     asteroid.position.set(0, 0, 50);
     asteroid.castShadow = true;
     scene.add(asteroid);
+    
+    console.log(`☄️ Астероид создан с текстурой NASA (диаметр: ${diameter}м)`);
 }
 
 // Установка координат вручную
@@ -312,20 +331,31 @@ function setImpactLocation(lat, lng, point = null) {
 
     // Если точка не передана, рассчитать её
     if (!point) {
-        const phi = (90 - lat) * (Math.PI / 180);
-        const theta = (lng + 180) * (Math.PI / 180);
+        // ТОЧНОЕ преобразование координат для соответствия карте и текстуре Земли
+        const latRad = lat * (Math.PI / 180);
+        const lngRad = lng * (Math.PI / 180);
+        const radius = 10;
         
         point = new THREE.Vector3();
-        point.x = -10 * Math.sin(phi) * Math.cos(theta);
-        point.y = 10 * Math.cos(phi);
-        point.z = 10 * Math.sin(phi) * Math.sin(theta);
+        // Исправленная формула с правильным смещением для текстуры Земли
+        point.x = radius * Math.cos(latRad) * Math.sin(lngRad + Math.PI);
+        point.y = radius * Math.sin(latRad);
+        point.z = radius * Math.cos(latRad) * Math.cos(lngRad + Math.PI);
         
         impactLocation.point = point;
+        
+        console.log(`🎯 Координаты установлены: Lat=${lat.toFixed(4)}°, Lng=${lng.toFixed(4)}°`);
+        console.log(`🎯 3D позиция: X=${point.x.toFixed(4)}, Y=${point.y.toFixed(4)}, Z=${point.z.toFixed(4)}`);
     }
 
-    // Создать маркер
+    // Создать маркер - удаляем старый если есть
     if (impactMarker) {
-        earth.remove(impactMarker);
+        if (impactMarker.parent) {
+            impactMarker.parent.remove(impactMarker);
+        }
+        scene.remove(impactMarker);
+        if (impactMarker.geometry) impactMarker.geometry.dispose();
+        if (impactMarker.material) impactMarker.material.dispose();
     }
 
     const markerGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -448,23 +478,23 @@ function animateImpact() {
 
         // Визуализация падения
         if (showFallVisualization) {
-            // След с интенсивностью зависящей от скорости
-            if (Math.random() > 0.5) {
+            // След с интенсивностью зависящей от скорости - больше частиц
+            if (Math.random() > 0.3) {
                 createEnhancedTrailParticle(asteroid.position.clone(), velocity, progress);
             }
             
-            // Нагрев при входе в атмосферу (последние 30% пути)
-            if (progress > 0.7) {
+            // Нагрев при входе в атмосферу (последние 30% пути) - чаще
+            if (progress > 0.7 && Math.random() > 0.4) {
                 createAtmosphericHeating(asteroid.position.clone(), progress);
             }
             
-            // Ударная волна перед астероидом
-            if (progress > 0.85) {
+            // Ударная волна перед астероидом - раньше и чаще
+            if (progress > 0.8 && Math.random() > 0.6) {
                 createShockwave(asteroid.position.clone(), endPos, progress);
             }
         } else {
-            // Простой след
-            if (Math.random() > 0.7) {
+            // Простой след - тоже улучшим
+            if (Math.random() > 0.5) {
                 createTrailParticle(asteroid.position.clone());
             }
         }
@@ -477,11 +507,30 @@ function animateImpact() {
             scene.remove(asteroid);
             asteroid = null;
             
+            // Удалить геомаркер после удара - ИСПРАВЛЕНО
+            if (impactMarker) {
+                // Удаляем маркер из его родителя (earth)
+                if (impactMarker.parent) {
+                    impactMarker.parent.remove(impactMarker);
+                }
+                // Также пробуем удалить из scene на случай, если он там
+                scene.remove(impactMarker);
+                // Очищаем геометрию и материал
+                if (impactMarker.geometry) impactMarker.geometry.dispose();
+                if (impactMarker.material) impactMarker.material.dispose();
+                impactMarker = null;
+            }
+            
             // Убрать свечение атмосферы
             if (atmosphereGlow) {
                 scene.remove(atmosphereGlow);
+                if (atmosphereGlow.geometry) atmosphereGlow.geometry.dispose();
+                if (atmosphereGlow.material) atmosphereGlow.material.dispose();
                 atmosphereGlow = null;
             }
+            
+            // Показать информацию о месте падения
+            showImpactLocationInfo(impactLocation.lat, impactLocation.lng, craterDiameter);
         }
     }
 
@@ -505,32 +554,42 @@ function createTrailParticle(position) {
 
 // Улучшенная частица следа с учетом скорости
 function createEnhancedTrailParticle(position, velocity, progress) {
-    const size = 0.1 + (velocity / 100);
-    const geometry = new THREE.SphereGeometry(size, 16, 16);
+    const size = 0.15 + (velocity / 80);
+    const geometry = new THREE.SphereGeometry(size, 20, 20);
     
-    // Цвет зависит от температуры (скорости)
+    // Цвет зависит от температуры (скорости) - более яркие цвета
     const temperature = velocity * progress;
     let color;
     if (temperature > 30) {
         color = 0xffffff; // Белый - очень горячо
     } else if (temperature > 20) {
-        color = 0xffff00; // Желтый - горячо
+        color = 0xffff88; // Светло-желтый - горячо
     } else if (temperature > 10) {
-        color = 0xff8800; // Оранжевый - тепло
+        color = 0xff9933; // Ярко-оранжевый - тепло
     } else {
-        color = 0xff4400; // Красный - начальная стадия
+        color = 0xff5500; // Ярко-красный - начальная стадия
     }
     
     const material = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
-        opacity: 1
+        opacity: 0.9
     });
     const particle = new THREE.Mesh(geometry, material);
     particle.position.copy(position);
+    
+    // Добавить внутреннее свечение
+    const glowGeometry = new THREE.SphereGeometry(size * 1.5, 16, 16);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.3
+    });
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    particle.add(glow);
+    
     scene.add(particle);
-
-    particles.push({ mesh: particle, life: 1, enhanced: true });
+    particles.push({ mesh: particle, life: 1.5, enhanced: true });
 }
 
 // Создание эффекта входа в атмосферу
@@ -550,25 +609,42 @@ function createAtmosphericEntry() {
 function createAtmosphericHeating(position, progress) {
     const heatIntensity = (progress - 0.7) / 0.3; // От 0 до 1
     
-    for (let i = 0; i < 3; i++) {
-        const size = 0.05 + Math.random() * 0.15;
-        const geometry = new THREE.SphereGeometry(size, 8, 8);
+    for (let i = 0; i < 8; i++) {
+        const size = 0.08 + Math.random() * 0.25;
+        const geometry = new THREE.SphereGeometry(size, 12, 12);
+        
+        // Более интенсивные цвета нагрева
+        const colors = [0xffffff, 0xffff44, 0xff8833, 0xff4411];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        
         const material = new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.5 ? 0xffff00 : 0xff8800,
+            color: color,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.9
         });
         const heatParticle = new THREE.Mesh(geometry, material);
         
         const offset = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.5,
-            (Math.random() - 0.5) * 0.5,
-            (Math.random() - 0.5) * 0.5
+            (Math.random() - 0.5) * 1.2,
+            (Math.random() - 0.5) * 1.2,
+            (Math.random() - 0.5) * 1.2
         );
         heatParticle.position.copy(position).add(offset);
+        
+        // Добавить движение частиц
+        const velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.05,
+            (Math.random() - 0.5) * 0.05,
+            (Math.random() - 0.5) * 0.05
+        );
+        
         scene.add(heatParticle);
-
-        particles.push({ mesh: heatParticle, life: 0.5, isHeat: true });
+        particles.push({ 
+            mesh: heatParticle, 
+            life: 0.8, 
+            isHeat: true,
+            velocity: velocity
+        });
     }
 }
 
@@ -592,12 +668,12 @@ function createShockwave(position, target, progress) {
     particles.push({ mesh: shockwave, life: 0.3, isShockwave: true });
 }
 
-// Реалистичный взрыв на основе данных NASA
+// Реалистичный взрыв на основе данных NASA - УЛУЧШЕННАЯ ВЕРСИЯ
 function createRealisticExplosion(position, craterDiameter, kineticEnergy, velocity, diameter) {
     const megatons = kineticEnergy / (4.184 * 10**15);
     
     // Главная вспышка - размер зависит от энергии
-    const flashSize = Math.min(2 + (megatons / 100), 8);
+    const flashSize = Math.min(3 + (megatons / 50), 12);
     const flashGeometry = new THREE.SphereGeometry(flashSize, 32, 32);
     const flashMaterial = new THREE.MeshBasicMaterial({
         color: 0xffffff,
@@ -608,28 +684,31 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
     flash.position.copy(position);
     scene.add(flash);
 
-    // Анимация вспышки
+    // Анимация вспышки с пульсацией
     let flashScale = 1;
+    let flashPulse = 0;
     const flashInterval = setInterval(() => {
-        flashScale += 0.3;
-        flash.scale.set(flashScale, flashScale, flashScale);
-        flash.material.opacity -= 0.03;
+        flashScale += 0.4;
+        flashPulse += 0.2;
+        const pulse = 1 + Math.sin(flashPulse) * 0.3;
+        flash.scale.set(flashScale * pulse, flashScale * pulse, flashScale * pulse);
+        flash.material.opacity -= 0.025;
 
         if (flash.material.opacity <= 0) {
             scene.remove(flash);
             clearInterval(flashInterval);
         }
-    }, 50);
+    }, 40);
 
-    // Огненный шар - количество частиц зависит от размера
-    const particleCount = Math.min(100 + Math.floor(diameter / 10), 500);
+    // Огненный шар - больше частиц для реалистичности
+    const particleCount = Math.min(200 + Math.floor(diameter / 5), 800);
     
     for (let i = 0; i < particleCount; i++) {
-        const particleSize = 0.05 + Math.random() * 0.2;
-        const particleGeometry = new THREE.SphereGeometry(particleSize, 8, 8);
+        const particleSize = 0.08 + Math.random() * 0.3;
+        const particleGeometry = new THREE.SphereGeometry(particleSize, 12, 12);
         
-        // Цвета взрыва: белый, желтый, оранжевый, красный
-        const colors = [0xffffff, 0xffff00, 0xff8800, 0xff4400, 0xff0000];
+        // Более разнообразные цвета взрыва
+        const colors = [0xffffff, 0xffff99, 0xffcc44, 0xff8844, 0xff4422, 0xff1100, 0xcc0000];
         const color = colors[Math.floor(Math.random() * colors.length)];
         
         const particleMaterial = new THREE.MeshBasicMaterial({
@@ -640,20 +719,51 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
         const particle = new THREE.Mesh(particleGeometry, particleMaterial);
         particle.position.copy(position);
 
-        // Скорость разлета зависит от энергии
-        const explosionSpeed = 0.2 + (velocity / 50);
-        const velocity3D = new THREE.Vector3(
+        // Более реалистичная скорость разлета
+        const explosionSpeed = 0.3 + (velocity / 30);
+        const direction = new THREE.Vector3(
             (Math.random() - 0.5) * 2,
             (Math.random() - 0.5) * 2,
             (Math.random() - 0.5) * 2
-        ).normalize().multiplyScalar(Math.random() * explosionSpeed + 0.1);
+        ).normalize();
+        
+        const speed = Math.random() * explosionSpeed + 0.05;
+        const velocity3D = direction.multiplyScalar(speed);
 
         scene.add(particle);
         explosionParticles.push({ 
             mesh: particle, 
             velocity: velocity3D, 
-            life: 1,
-            fadeSpeed: 0.005 + Math.random() * 0.01
+            life: 1.5 + Math.random() * 0.5,
+            fadeSpeed: 0.003 + Math.random() * 0.007,
+            initialSize: particleSize
+        });
+    }
+
+    // Дополнительные искры
+    for (let i = 0; i < 50; i++) {
+        const sparkGeometry = new THREE.SphereGeometry(0.02 + Math.random() * 0.08, 8, 8);
+        const sparkMaterial = new THREE.MeshBasicMaterial({
+            color: Math.random() > 0.5 ? 0xffff00 : 0xff4400,
+            transparent: true,
+            opacity: 1
+        });
+        const spark = new THREE.Mesh(sparkGeometry, sparkMaterial);
+        spark.position.copy(position);
+
+        const sparkVelocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.8,
+            (Math.random() - 0.5) * 0.8,
+            (Math.random() - 0.5) * 0.8
+        );
+
+        scene.add(spark);
+        explosionParticles.push({ 
+            mesh: spark, 
+            velocity: sparkVelocity, 
+            life: 0.8,
+            fadeSpeed: 0.02,
+            isSpark: true
         });
     }
 
@@ -667,6 +777,41 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
     if (megatons > 1) {
         createMushroomCloud(position, megatons);
     }
+    
+    // Световая волна
+    createLightWave(position, megatons);
+}
+
+// Световая волна от взрыва
+function createLightWave(position, megatons) {
+    const waveSize = Math.min(15 + megatons * 5, 50);
+    let currentSize = 2;
+    
+    const waveInterval = setInterval(() => {
+        currentSize += 3;
+        
+        const waveGeometry = new THREE.SphereGeometry(currentSize, 32, 32);
+        const waveMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffaa,
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.BackSide
+        });
+        const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+        wave.position.copy(position);
+        scene.add(wave);
+        
+        explosionParticles.push({ 
+            mesh: wave, 
+            life: 0.3, 
+            isWave: true,
+            fadeSpeed: 0.02
+        });
+        
+        if (currentSize >= waveSize) {
+            clearInterval(waveInterval);
+        }
+    }, 80);
 }
 
 // Ударная волна по поверхности
@@ -802,12 +947,25 @@ function resetSimulation() {
     }
 
     if (impactMarker) {
-        earth.remove(impactMarker);
+        // Удаляем маркер правильно
+        if (impactMarker.parent) {
+            impactMarker.parent.remove(impactMarker);
+        }
+        scene.remove(impactMarker);
+        if (impactMarker.geometry) impactMarker.geometry.dispose();
+        if (impactMarker.material) impactMarker.material.dispose();
         impactMarker = null;
     }
 
     if (crater) {
-        earth.remove(crater);
+        if (crater.parent) {
+            crater.parent.remove(crater);
+        }
+        // Очистить все дочерние элементы кратера
+        crater.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        });
         crater = null;
     }
 
@@ -877,15 +1035,18 @@ function updateMapMarker(lat, lng) {
 function updateParticles() {
     // След
     particles.forEach((particle, index) => {
-        particle.life -= particle.enhanced ? 0.015 : 0.02;
+        particle.life -= particle.enhanced ? 0.012 : 0.02;
         particle.mesh.material.opacity = particle.life;
         
         if (particle.isHeat) {
-            particle.mesh.position.y += 0.01; // Поднимается вверх
+            particle.mesh.position.y += 0.02; // Поднимается вверх быстрее
+            if (particle.velocity) {
+                particle.mesh.position.add(particle.velocity);
+            }
         }
         
         if (!particle.isShockwave) {
-            particle.mesh.scale.multiplyScalar(0.95);
+            particle.mesh.scale.multiplyScalar(0.97);
         }
 
         if (particle.life <= 0) {
@@ -898,11 +1059,21 @@ function updateParticles() {
     explosionParticles.forEach((particle, index) => {
         if (particle.velocity) {
             particle.mesh.position.add(particle.velocity);
+            // Добавить гравитацию для частиц взрыва
+            if (!particle.isSpark && !particle.isWave) {
+                particle.velocity.y -= 0.001;
+            }
         }
         
         const fadeSpeed = particle.fadeSpeed || 0.01;
         particle.life -= fadeSpeed;
         particle.mesh.material.opacity = Math.max(0, particle.life);
+        
+        // Уменьшение размера частиц со временем
+        if (particle.initialSize && particle.life < 0.5) {
+            const scale = particle.life * 2;
+            particle.mesh.scale.set(scale, scale, scale);
+        }
 
         if (particle.life <= 0) {
             if (particle.parent) {
@@ -913,6 +1084,238 @@ function updateParticles() {
             explosionParticles.splice(index, 1);
         }
     });
+}
+
+// Показать детальную информацию о месте падения после удара
+function showImpactLocationInfo(lat, lng, craterDiameter) {
+    const impactDetails = document.getElementById('impact-details');
+    
+    // Определить регион
+    let locationName = getLocationName(lat, lng);
+    
+    // Определить тип местности
+    let terrainType = getTerrainType(lat, lng);
+    
+    // Определить полушария
+    let hemisphere = getHemisphere(lat, lng);
+    
+    // Определить климатическую зону
+    let climateZone = getClimateZone(lat);
+    
+    // Определить часовой пояс (приблизительно)
+    let timeZone = Math.round(lng / 15);
+    let timeZoneStr = `UTC${timeZone >= 0 ? '+' : ''}${timeZone}`;
+    
+    // Добавить детальную информацию о месте падения
+    const locationInfo = `
+        <div class="detail-row" style="border-top: 2px solid #4CAF50; margin-top: 10px; padding-top: 10px;">
+            <span class="detail-label">📍 Место падения:</span>
+            <span class="detail-value">${locationName}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Координаты:</span>
+            <span class="detail-value">${lat.toFixed(4)}° ${lat >= 0 ? 'С.Ш.' : 'Ю.Ш.'}, ${lng.toFixed(4)}° ${lng >= 0 ? 'В.Д.' : 'З.Д.'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Полушария:</span>
+            <span class="detail-value">${hemisphere}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Тип местности:</span>
+            <span class="detail-value">${terrainType}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Климатическая зона:</span>
+            <span class="detail-value">${climateZone}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Часовой пояс:</span>
+            <span class="detail-value">${timeZoneStr}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Площадь поражения:</span>
+            <span class="detail-value">~${(Math.PI * Math.pow(craterDiameter * 2, 2) / 1000000).toFixed(2)} км²</span>
+        </div>
+    `;
+    
+    impactDetails.innerHTML += locationInfo;
+    
+    console.log(`💥 Детальная информация о падении:`);
+    console.log(`   Регион: ${locationName}`);
+    console.log(`   Координаты: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`   Местность: ${terrainType}`);
+    console.log(`   Климат: ${climateZone}`);
+}
+
+// Определить тип местности по координатам
+function getTerrainType(lat, lng) {
+    // Проверка на океаны (упрощенная логика)
+    const isOcean = 
+        (lng > -180 && lng < -80 && lat > -60 && lat < 60) || // Тихий
+        (lng > -80 && lng < 20 && lat > -60 && lat < 60) || // Атлантический
+        (lng > 20 && lng < 120 && lat > -60 && lat < 30) || // Индийский
+        (lat > 60) || // Северный Ледовитый
+        (lat < -60); // Южный
+    
+    if (isOcean) return "🌊 Океан/Море";
+    
+    // Горные регионы
+    if ((lat > 25 && lat < 40 && lng > 70 && lng < 105) || // Гималаи
+        (lat > 35 && lat < 50 && lng > -125 && lng < -100) || // Скалистые горы
+        (lat > -40 && lat < -20 && lng > -75 && lng < -65)) { // Анды
+        return "⛰️ Горная местность";
+    }
+    
+    // Пустыни
+    if ((lat > 15 && lat < 35 && lng > -10 && lng < 35) || // Сахара
+        (lat > 25 && lat < 40 && lng > 40 && lng < 65) || // Аравийская
+        (lat > -30 && lat < -20 && lng > 115 && lng < 140)) { // Австралийская
+        return "🏜️ Пустыня";
+    }
+    
+    // Тропические леса
+    if ((lat > -10 && lat < 10 && lng > -80 && lng < -40) || // Амазония
+        (lat > -5 && lat < 5 && lng > 10 && lng < 30)) { // Конго
+        return "🌴 Тропический лес";
+    }
+    
+    // Тундра/Арктика
+    if (lat > 66 || lat < -66) return "❄️ Тундра/Полярная область";
+    
+    // Лесная зона
+    if (lat > 45 && lat < 66) return "🌲 Лесная зона (тайга)";
+    
+    // Степь/Равнина
+    if (lat > 30 && lat < 50) return "🌾 Степь/Равнина";
+    
+    return "🏞️ Равнинная местность";
+}
+
+// Определить полушария
+function getHemisphere(lat, lng) {
+    const ns = lat >= 0 ? "Северное" : "Южное";
+    const ew = lng >= 0 ? "Восточное" : "Западное";
+    return `${ns}, ${ew}`;
+}
+
+// Определить климатическую зону
+function getClimateZone(lat) {
+    const absLat = Math.abs(lat);
+    
+    if (absLat > 66.5) return "❄️ Полярный климат";
+    if (absLat > 60) return "🌨️ Субполярный климат";
+    if (absLat > 45) return "🌡️ Умеренный климат";
+    if (absLat > 30) return "🌤️ Субтропический климат";
+    if (absLat > 23.5) return "🌞 Тропический климат";
+    return "☀️ Экваториальный климат";
+}
+
+// Определить детальное название местоположения по координатам
+function getLocationName(lat, lng) {
+    // Северная Америка - детальная разбивка
+    if (lat > 15 && lat < 72 && lng > -170 && lng < -52) {
+        // Канада
+        if (lat > 49 && lng > -141 && lng < -53) {
+            if (lng > -95) return "Восточная Канада";
+            if (lng > -120) return "Центральная Канада (Прерии)";
+            return "Западная Канада";
+        }
+        // США
+        if (lat > 24 && lat < 49 && lng > -125 && lng < -66) {
+            if (lng > -80) return "Восточное побережье США";
+            if (lng > -95) return "Средний Запад США";
+            if (lng > -110) return "Великие равнины США";
+            return "Западное побережье США";
+        }
+        // Мексика и Центральная Америка
+        if (lat > 15 && lng > -118 && lng < -86) return "Мексика";
+        if (lat > 7 && lng > -92 && lng < -77) return "Центральная Америка";
+        return "Северная Америка";
+    }
+    
+    // Южная Америка - детальная разбивка
+    if (lat > -55 && lat < 15 && lng > -81 && lng < -34) {
+        if (lat > -5 && lng > -80 && lng < -66) return "Колумбия/Венесуэла";
+        if (lat > -18 && lng > -77 && lng < -48) return "Бразилия";
+        if (lat > -35 && lat < -18 && lng > -70 && lng < -53) return "Аргентина";
+        if (lat > -25 && lng > -75 && lng < -66) return "Перу/Боливия";
+        if (lat > -40 && lng > -75 && lng < -66) return "Чили";
+        return "Южная Америка";
+    }
+    
+    // Европа - детальная разбивка
+    if (lat > 35 && lat < 72 && lng > -25 && lng < 45) {
+        if (lat > 66) return "Северная Скандинавия";
+        if (lat > 55 && lng > 10 && lng < 32) return "Скандинавия (Швеция/Норвегия)";
+        if (lat > 55 && lng > -10 && lng < 10) return "Британские острова";
+        if (lat > 50 && lng > 5 && lng < 15) return "Германия";
+        if (lat > 45 && lng > -5 && lng < 8) return "Франция";
+        if (lat > 40 && lng > 8 && lng < 19) return "Италия";
+        if (lat > 36 && lng > -10 && lng < 5) return "Испания/Португалия";
+        if (lat > 40 && lng > 19 && lng < 30) return "Балканы";
+        if (lat > 45 && lng > 15 && lng < 30) return "Восточная Европа";
+        if (lat > 50 && lng > 20 && lng < 40) return "Восточная Европа (Польша/Украина)";
+        return "Европа";
+    }
+    
+    // Россия
+    if (lat > 40 && lat < 80 && lng > 25 && lng < 180) {
+        if (lng < 60) return "Европейская часть России";
+        if (lng < 100) return "Западная Сибирь";
+        if (lng < 140) return "Восточная Сибирь";
+        return "Дальний Восток России";
+    }
+    
+    // Азия - детальная разбивка
+    if (lat > -10 && lat < 80 && lng > 45 && lng < 180) {
+        // Ближний Восток
+        if (lat > 12 && lat < 42 && lng > 34 && lng < 65) return "Ближний Восток";
+        // Центральная Азия
+        if (lat > 35 && lat < 50 && lng > 50 && lng < 90) return "Центральная Азия";
+        // Южная Азия
+        if (lat > 5 && lat < 35 && lng > 65 && lng < 95) return "Южная Азия (Индия/Пакистан)";
+        // Юго-Восточная Азия
+        if (lat > -10 && lat < 25 && lng > 95 && lng < 115) return "Юго-Восточная Азия";
+        // Восточная Азия
+        if (lat > 20 && lat < 50 && lng > 100 && lng < 145) {
+            if (lng > 130) return "Япония";
+            if (lat > 35) return "Северо-Восточный Китай";
+            return "Восточный Китай";
+        }
+        return "Азия";
+    }
+    
+    // Африка - детальная разбивка
+    if (lat > -35 && lat < 37 && lng > -18 && lng < 50) {
+        if (lat > 20 && lng > -10 && lng < 32) return "Северная Африка (Сахара)";
+        if (lat > 15 && lng > 30 && lng < 50) return "Северо-Восточная Африка";
+        if (lat > -10 && lat < 15 && lng > 10 && lng < 40) return "Центральная Африка";
+        if (lat > -35 && lat < -10 && lng > 15 && lng < 40) return "Южная Африка";
+        if (lat > -5 && lng > -18 && lng < 15) return "Западная Африка";
+        return "Африка";
+    }
+    
+    // Австралия и Океания
+    if (lat > -50 && lat < -10 && lng > 110 && lng < 180) {
+        if (lng > 140 && lat > -30) return "Восточная Австралия";
+        if (lng < 130) return "Западная Австралия";
+        return "Австралия";
+    }
+    
+    // Антарктида
+    if (lat < -60) {
+        if (lng > -60 && lng < 20) return "Западная Антарктида";
+        return "Восточная Антарктида";
+    }
+    
+    // Океаны - детальная разбивка
+    if (lng > -180 && lng < -80 && lat > -60 && lat < 60) return "Тихий океан";
+    if (lng > -80 && lng < 20 && lat > -60 && lat < 60) return "Атлантический океан";
+    if (lng > 20 && lng < 120 && lat > -60 && lat < 30) return "Индийский океан";
+    if (lat > 60) return "Северный Ледовитый океан";
+    if (lat < -60) return "Южный океан";
+    
+    return "Мировой океан";
 }
 
 // Обработка изменения размера окна

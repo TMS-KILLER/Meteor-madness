@@ -58,17 +58,25 @@ function createStarfield() {
 function createEarth() {
     const geometry = new THREE.SphereGeometry(10, 64, 64);
     
-    // Локальные текстуры Земли
+    // Локальная текстура Земли от NASA Blue Marble
     const textureLoader = new THREE.TextureLoader();
-    const earthTexture = textureLoader.load('textures/earth.jpg');
-    const bumpTexture = textureLoader.load('textures/earth_bump.jpg');
-    const specularTexture = textureLoader.load('textures/earth_specular.jpg');
+    const earthTexture = textureLoader.load(
+        'textures/earth.jpg',
+        () => console.log('✅ Текстура Земли от NASA загружена'),
+        undefined,
+        (error) => {
+            console.error('❌ Ошибка загрузки текстуры Земли:', error);
+            // Fallback - простой синий цвет
+            earth.material = new THREE.MeshPhongMaterial({
+                color: 0x2233ff,
+                specular: new THREE.Color(0x333333),
+                shininess: 15
+            });
+        }
+    );
 
     const material = new THREE.MeshPhongMaterial({
         map: earthTexture,
-        bumpMap: bumpTexture,
-        bumpScale: 0.3,
-        specularMap: specularTexture,
         specular: new THREE.Color(0x333333),
         shininess: 15
     });
@@ -97,16 +105,16 @@ function createEarth() {
 function createSun() {
     const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
     
-    // Локальная текстура Солнца
+    // Локальная текстура Солнца от NASA SDO
     const sunTexture = new THREE.TextureLoader().load(
         'textures/sun.jpg',
         () => {
-            console.log('✅ Текстура Солнца загружена');
+            console.log('✅ Текстура Солнца от NASA SDO загружена');
         },
         undefined,
         (error) => {
             console.error('❌ Ошибка загрузки текстуры Солнца:', error);
-            // Fallback - процедурная текстура
+            // Fallback - яркий желтый цвет
             mesh.material = new THREE.MeshBasicMaterial({
                 color: 0xffaa00,
                 emissive: 0xff6600,

@@ -598,14 +598,30 @@ function animateImpact() {
             scene.remove(asteroid);
             asteroid = null;
             
+            // Удалить индикатор цели
             if (targetIndicator) {
                 scene.remove(targetIndicator);
+                if (targetIndicator.geometry) targetIndicator.geometry.dispose();
+                if (targetIndicator.material) targetIndicator.material.dispose();
                 targetIndicator = null;
+            }
+            
+            // Удалить маркер места падения с глобуса
+            if (impactMarker) {
+                if (impactMarker.parent) {
+                    impactMarker.parent.remove(impactMarker);
+                }
+                scene.remove(impactMarker);
+                if (impactMarker.geometry) impactMarker.geometry.dispose();
+                if (impactMarker.material) impactMarker.material.dispose();
+                impactMarker = null;
             }
             
             // Remove atmosphere glow
             if (atmosphereGlow) {
                 scene.remove(atmosphereGlow);
+                if (atmosphereGlow.geometry) atmosphereGlow.geometry.dispose();
+                if (atmosphereGlow.material) atmosphereGlow.material.dispose();
                 atmosphereGlow = null;
             }
 
