@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#ff6b35">
-    <meta name="description" content="Интерактивный симулятор столкновения астероидов - NASA Space Apps Challenge 2025">
-    <meta name="keywords" content="asteroid, meteor, NASA, space, simulation, астероид, метеор, космос, симуляция">
+    <meta name="description" content="Interactive asteroid impact simulator - NASA Space Apps Challenge 2025">
+    <meta name="keywords" content="asteroid, meteor, NASA, space, simulation, impact, earth">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <title> METEOR MADNESS - NASA Space Apps 2025</title>
@@ -27,8 +27,8 @@
     </div>
 
     <div id="ui-container">
-        <!-- NASA Eyes Style - Индикатор свайпа -->
-        <button id="panel-toggle" class="panel-toggle" aria-label="Свайп вверх для панели управления">
+        <!-- NASA Eyes Style - Swipe indicator -->
+        <button id="panel-toggle" class="panel-toggle" aria-label="Swipe up to open control panel">
             <span class="toggle-icon"></span>
         </button>
         
@@ -146,20 +146,20 @@
         </div>
     </div>
 
-    <!-- Библиотеки - загружаем первыми -->
+    <!-- Libraries - load first -->
     <script src="libs/three/three.min.js"></script>
     <script src="libs/three/OrbitControls.js"></script>
     <script src="libs/leaflet/leaflet.js"></script>
     
     <script>
-        // Настройка путей для иконок Leaflet
+        // Configure Leaflet icon paths
         if (typeof L !== 'undefined') {
             L.Icon.Default.imagePath = 'libs/leaflet/';
         }
         
         window.addEventListener('DOMContentLoaded', () => {
             if (typeof L === 'undefined') {
-                console.error('Leaflet не загружен!');
+                console.error('Leaflet not loaded!');
                 return;
             }
             
@@ -233,7 +233,6 @@
         });
     </script>
     
-        
     <!-- Modules - versioned to prevent caching -->
     <script src="js/mobile.js?v=50"></script>
     <script src="js/config.js?v=50"></script>

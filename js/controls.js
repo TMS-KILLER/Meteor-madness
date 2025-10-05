@@ -21,7 +21,7 @@ function setCoordinatesFromInput() {
     setImpactLocation(latInput, lngInput);
 }
 
-// Установка места падения - СИНХРОНИЗИРОВАНО С КАРТОЙ И ТЕКСТУРОЙ
+// Set impact location - SYNCHRONIZED WITH MAP AND TEXTURE
 function setImpactLocation(lat, lng, point = null) {
     impactLocation = { lat, lng };
     document.getElementById('lat').textContent = lat.toFixed(2) + '°';
@@ -31,22 +31,22 @@ function setImpactLocation(lat, lng, point = null) {
 
     const radius = window.earthRadius || 15;
     const latRad = lat * Math.PI / 180;
-    const lngRad = -lng * Math.PI / 180;  // ИНВЕРТИРУЕМ долготу! Карта зеркальна к текстуре
+    const lngRad = -lng * Math.PI / 180;  // INVERT longitude! Map is mirrored relative to texture
 
-    // ПРАВИЛЬНАЯ ФОРМУЛА для Equirectangular текстуры (стандарт NASA Blue Marble)
-    // lng=0° (Greenwich) смотрит на +X
-    // lng=90°E (карта) → -90° (3D) смотрит на -Z
-    // lng=-90°W (карта) → +90° (3D) смотрит на +Z
+    // Correct formula for equirectangular NASA Blue Marble texture
+    // lng=0° (Greenwich) looks at +X
+    // lng=90°E (map) → -90° (3D) looks at -Z
+    // lng=-90°W (map) → +90° (3D) looks at +Z
     const localPoint = new THREE.Vector3(
         radius * Math.cos(latRad) * Math.cos(lngRad),   // X = R*cos(lat)*cos(-lng)
-        radius * Math.sin(latRad),                        // Y = R*sin(lat)
+        radius * Math.sin(latRad),                      // Y = R*sin(lat)
         radius * Math.cos(latRad) * Math.sin(lngRad)    // Z = R*cos(lat)*sin(-lng)
     );
     impactLocation.point = localPoint;
 
-    // Обратная проверка
+    // Reverse verification
     const verifyLat = Math.asin(localPoint.y / radius) * 180 / Math.PI;
-    const verifyLng = -Math.atan2(localPoint.z, localPoint.x) * 180 / Math.PI;  // Обратная инверсия
+    const verifyLng = -Math.atan2(localPoint.z, localPoint.x) * 180 / Math.PI;  // reverse inversion
     const dLat = Math.abs(lat - verifyLat);
     const dLng = Math.abs(lng - verifyLng);
     console.log(`🔍 VERIFY: ${verifyLat.toFixed(5)}°, ${verifyLng.toFixed(5)}°  ΔLat=${dLat.toFixed(5)} ΔLng=${dLng.toFixed(5)}`);
@@ -58,34 +58,33 @@ function setImpactLocation(lat, lng, point = null) {
     checkReadyToStart();
 }
 
-// Экспорт для использования из HTML
+// Export for HTML
 window.setImpactLocation = setImpactLocation;
 
-// Тестовая функция для проверки координат известных мест
+// Test function for known coordinates
 function testCoordinates() {
-    console.log('=== ТЕСТ КООРДИНАТ ===');
+    console.log('=== TEST COORDINATES ===');
     const testPoints = [
-        { name: 'Нулевая точка (0°, 0°)', lat: 0, lng: 0 },
-        { name: 'Лондон (51.5°N, 0°)', lat: 51.5, lng: 0 },
-        { name: 'Москва (55.75°N, 37.6°E)', lat: 55.75, lng: 37.6 },
-        { name: 'Нью-Йорк (40.7°N, 74°W)', lat: 40.7, lng: -74 },
-        { name: 'Токио (35.7°N, 139.7°E)', lat: 35.7, lng: 139.7 },
-        { name: 'Сидней (33.9°S, 151.2°E)', lat: -33.9, lng: 151.2 }
+        { name: 'Null point (0°, 0°)', lat: 0, lng: 0 },
+        { name: 'London (51.5°N, 0°)', lat: 51.5, lng: 0 },
+        { name: 'Moscow (55.75°N, 37.6°E)', lat: 55.75, lng: 37.6 },
+        { name: 'New York (40.7°N, 74°W)', lat: 40.7, lng: -74 },
+        { name: 'Tokyo (35.7°N, 139.7°E)', lat: 35.7, lng: 139.7 },
+        { name: 'Sydney (33.9°S, 151.2°E)', lat: -33.9, lng: 151.2 }
     ];
     
     const radius = window.earthRadius || 15;
     testPoints.forEach(point => {
         const latRad = point.lat * (Math.PI / 180);
-        const lngRad = -point.lng * (Math.PI / 180);  // ИНВЕРТИРУЕМ
+        const lngRad = -point.lng * (Math.PI / 180);  // inverted
         
-        // ИНВЕРТИРОВАННАЯ ФОРМУЛА: -lng
         const pos = new THREE.Vector3(
             radius * Math.cos(latRad) * Math.cos(lngRad),
             radius * Math.sin(latRad),
             radius * Math.cos(latRad) * Math.sin(lngRad)
         );
         const verifyLat = Math.asin(pos.y / radius) * 180 / Math.PI;
-        const verifyLng = -Math.atan2(pos.z, pos.x) * 180 / Math.PI;  // Обратная инверсия
+        const verifyLng = -Math.atan2(pos.z, pos.x) * 180 / Math.PI;  // reverse inversion
         
         console.log(`${point.name}:`);
         console.log(`  3D: X=${pos.x.toFixed(3)}, Y=${pos.y.toFixed(3)}, Z=${pos.z.toFixed(3)}`);
@@ -93,10 +92,10 @@ function testCoordinates() {
     });
 }
 
-// Экспорт для тестирования из консоли
+// Export for console testing
 window.testCoordinates = testCoordinates;
 
-// Визуальный тест - отметить известные города на глобусе
+// Visual test - mark known cities on globe
 function showTestMarkers() {
     console.log('🗺️ Adding test markers for known cities...');
     
@@ -111,16 +110,15 @@ function showTestMarkers() {
     testCities.forEach(city => {
         const radius = window.earthRadius || 15;
         const latRad = city.lat * (Math.PI / 180);
-        const lngRad = -city.lng * (Math.PI / 180);  // ИНВЕРТИРУЕМ
+        const lngRad = -city.lng * (Math.PI / 180);  // invert
         
-        // ИНВЕРТИРОВАННАЯ ФОРМУЛА: -lng
         const pos = new THREE.Vector3(
             radius * Math.cos(latRad) * Math.cos(lngRad),
             radius * Math.sin(latRad),
             radius * Math.cos(latRad) * Math.sin(lngRad)
         );
         
-        const markerGeo = new THREE.SphereGeometry(0.4, 16, 16); // Увеличен размер
+        const markerGeo = new THREE.SphereGeometry(0.4, 16, 16);
         const markerMat = new THREE.MeshBasicMaterial({ color: city.color });
         const marker = new THREE.Mesh(markerGeo, markerMat);
         marker.position.copy(pos).normalize().multiplyScalar(radius + 0.4);
@@ -133,7 +131,7 @@ function showTestMarkers() {
     console.log('✅ Test markers added! Check if they match real locations on the globe.');
 }
 
-// Удалить тестовые маркеры
+// Remove test markers
 function clearTestMarkers() {
     const markers = earth.children.filter(child => child.name && child.name.startsWith('test-marker-'));
     markers.forEach(marker => {
@@ -147,21 +145,18 @@ function clearTestMarkers() {
 window.showTestMarkers = showTestMarkers;
 window.clearTestMarkers = clearTestMarkers;
 
-// Проверка готовности к запуску
+// Check ready state
 function checkReadyToStart() {
     const startButton = document.getElementById('start-simulation');
-    // Проверяем наличие астероида и координат удара (маркер только на карте, не на глобусе!)
     if (selectedAsteroid && impactLocation) {
         startButton.disabled = false;
     }
 }
 
-// Обновление маркера на карте
+// Update map marker
 function updateMapMarker(lat, lng) {
     if (!window.mapInitialized) return;
     
-    // ПОКАЗЫВАЕМ геомаркер НА КАРТЕ (но не на глобусе!)
-    // Update marker on small map
     if (mapMarker) {
         mapMarker.setLatLng([lat, lng]);
     } else {
@@ -180,7 +175,6 @@ function updateMapMarker(lat, lng) {
     
     window.map.setView([lat, lng], 5);
     
-    // Update marker on fullscreen map too
     if (window.mapFullscreen) {
         if (window.mapMarkerFullscreen) {
             window.mapMarkerFullscreen.setLatLng([lat, lng]);
@@ -217,33 +211,24 @@ function toggleVisualization() {
     }
 }
 
-// Add crater marker to map after impact - УЛУЧШЕННАЯ ВЕРСИЯ С ЗОНАМИ ПОРАЖЕНИЯ
+// Add crater marker with damage zones
 function addCraterToMap(lat, lng, craterDiameterKm) {
     if (!window.mapInitialized) return;
     
-    console.log(`🗺️ Adding ENHANCED crater with damage zones to maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`🗺️ Adding enhanced crater with damage zones to maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
     
-    // Вычисляем энергию для расчета зон поражения
     const megatons = window.impactCalculations ? window.impactCalculations.megatons : 1;
     const kilotons = megatons * 1000;
     
-    // NASA формулы для зон поражения
     const fireballRadiusKm = 0.28 * Math.pow(kilotons, 0.33);
     const severeRadiusKm = 0.54 * Math.pow(kilotons, 0.33);
     const moderateRadiusKm = 1.28 * Math.pow(kilotons, 0.33);
     const lightRadiusKm = 2.5 * Math.pow(kilotons, 0.33);
     const seismicRadiusKm = 4.5 * Math.pow(kilotons, 0.33);
     
-    console.log(`📊 Damage zones (NASA):
-    - Fireball: ${fireballRadiusKm.toFixed(2)} km
-    - Severe (20 psi): ${severeRadiusKm.toFixed(2)} km
-    - Moderate (5 psi): ${moderateRadiusKm.toFixed(2)} km
-    - Light (1 psi): ${lightRadiusKm.toFixed(2)} km
-    - Seismic: ${seismicRadiusKm.toFixed(2)} km`);
+    console.log(`📊 Damage zones (NASA):\n    - Fireball: ${fireballRadiusKm.toFixed(2)} km\n    - Severe (20 psi): ${severeRadiusKm.toFixed(2)} km\n    - Moderate (5 psi): ${moderateRadiusKm.toFixed(2)} km\n    - Light (1 psi): ${lightRadiusKm.toFixed(2)} km\n    - Seismic: ${seismicRadiusKm.toFixed(2)} km`);
     
-    // === МАЛЕНЬКАЯ КАРТА ===
-    
-    // 5. Сейсмическая зона (самая внешняя)
+    // Small map
     const seismicCircle = L.circle([lat, lng], {
         color: '#ddaa66',
         fillColor: '#ddaa66',
@@ -251,9 +236,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: seismicRadiusKm * 1000,
         weight: 2
     }).addTo(window.map);
-    seismicCircle.bindPopup(`<b>🌊 Сейсмическая зона</b><br>Радиус: ${seismicRadiusKm.toFixed(2)} км<br>Землетрясения и цунами`);
+    seismicCircle.bindPopup(`<b>🌊 Seismic Zone</b><br>Radius: ${seismicRadiusKm.toFixed(2)} km<br>Earthquakes and tsunamis`);
     
-    // 4. Зона легких повреждений (1 psi)
     const lightCircle = L.circle([lat, lng], {
         color: '#ffaa33',
         fillColor: '#ffaa33',
@@ -261,9 +245,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: lightRadiusKm * 1000,
         weight: 2
     }).addTo(window.map);
-    lightCircle.bindPopup(`<b>⚠️ Легкие повреждения (1 psi)</b><br>Радиус: ${lightRadiusKm.toFixed(2)} км<br>Разбитые окна, легкие травмы`);
+    lightCircle.bindPopup(`<b>⚠️ Light Damage (1 psi)</b><br>Radius: ${lightRadiusKm.toFixed(2)} km<br>Broken windows, minor injuries`);
     
-    // 3. Зона умеренных разрушений (5 psi)
     const moderateCircle = L.circle([lat, lng], {
         color: '#ff7700',
         fillColor: '#ff7700',
@@ -271,9 +254,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: moderateRadiusKm * 1000,
         weight: 2
     }).addTo(window.map);
-    moderateCircle.bindPopup(`<b>🏚️ Умеренные разрушения (5 psi)</b><br>Радиус: ${moderateRadiusKm.toFixed(2)} км<br>Разрушение зданий, серьезные травмы`);
+    moderateCircle.bindPopup(`<b>🏚️ Moderate Destruction (5 psi)</b><br>Radius: ${moderateRadiusKm.toFixed(2)} km<br>Building damage, serious injuries`);
     
-    // 2. Зона сильных разрушений (20 psi)
     const severeCircle = L.circle([lat, lng], {
         color: '#ff4400',
         fillColor: '#ff4400',
@@ -281,9 +263,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: severeRadiusKm * 1000,
         weight: 2
     }).addTo(window.map);
-    severeCircle.bindPopup(`<b>� Сильные разрушения (20 psi)</b><br>Радиус: ${severeRadiusKm.toFixed(2)} км<br>Полное разрушение, крайне высокая летальность`);
+    severeCircle.bindPopup(`<b>💀 Severe Destruction (20 psi)</b><br>Radius: ${severeRadiusKm.toFixed(2)} km<br>Complete destruction, extreme lethality`);
     
-    // 1. Огненный шар (центр)
     const fireballCircle = L.circle([lat, lng], {
         color: '#ffff00',
         fillColor: '#ff0000',
@@ -291,9 +272,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: fireballRadiusKm * 1000,
         weight: 3
     }).addTo(window.map);
-    fireballCircle.bindPopup(`<b>🔥 ОГНЕННЫЙ ШАР</b><br>Радиус: ${fireballRadiusKm.toFixed(2)} км<br>Испарение всего в зоне поражения`);
+    fireballCircle.bindPopup(`<b>🔥 FIREBALL</b><br>Radius: ${fireballRadiusKm.toFixed(2)} km<br>Vaporization in impact zone`);
     
-    // Кратер (самый центр)
     const craterCircle = L.circle([lat, lng], {
         color: '#000000',
         fillColor: '#1a1a1a',
@@ -301,10 +281,9 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: (craterDiameterKm / 2) * 1000,
         weight: 3
     }).addTo(window.map);
-    craterCircle.bindPopup(`<b>🕳️ КРАТЕР</b><br>Диаметр: ${craterDiameterKm.toFixed(2)} км<br>Локация: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    craterCircle.bindPopup(`<b>🕳️ CRATER</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
     
-    // === ПОЛНОЭКРАННАЯ КАРТА ===
-    
+    // Fullscreen map
     const seismicCircleFs = L.circle([lat, lng], {
         color: '#ddaa66',
         fillColor: '#ddaa66',
@@ -312,7 +291,7 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: seismicRadiusKm * 1000,
         weight: 2
     }).addTo(window.mapFullscreen);
-    seismicCircleFs.bindPopup(`<b>🌊 Сейсмическая зона</b><br>Радиус: ${seismicRadiusKm.toFixed(2)} км`);
+    seismicCircleFs.bindPopup(`<b>🌊 Seismic Zone</b><br>Radius: ${seismicRadiusKm.toFixed(2)} km`);
     
     const lightCircleFs = L.circle([lat, lng], {
         color: '#ffaa33',
@@ -321,7 +300,7 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: lightRadiusKm * 1000,
         weight: 2
     }).addTo(window.mapFullscreen);
-    lightCircleFs.bindPopup(`<b>⚠️ Легкие повреждения</b><br>Радиус: ${lightRadiusKm.toFixed(2)} км`);
+    lightCircleFs.bindPopup(`<b>⚠️ Light Damage</b><br>Radius: ${lightRadiusKm.toFixed(2)} km`);
     
     const moderateCircleFs = L.circle([lat, lng], {
         color: '#ff7700',
@@ -330,7 +309,7 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: moderateRadiusKm * 1000,
         weight: 2
     }).addTo(window.mapFullscreen);
-    moderateCircleFs.bindPopup(`<b>🏚️ Умеренные разрушения</b><br>Радиус: ${moderateRadiusKm.toFixed(2)} км`);
+    moderateCircleFs.bindPopup(`<b>🏚️ Moderate Destruction</b><br>Radius: ${moderateRadiusKm.toFixed(2)} km`);
     
     const severeCircleFs = L.circle([lat, lng], {
         color: '#ff4400',
@@ -339,7 +318,7 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: severeRadiusKm * 1000,
         weight: 2
     }).addTo(window.mapFullscreen);
-    severeCircleFs.bindPopup(`<b>💀 Сильные разрушения</b><br>Радиус: ${severeRadiusKm.toFixed(2)} км`);
+    severeCircleFs.bindPopup(`<b>💀 Severe Destruction</b><br>Radius: ${severeRadiusKm.toFixed(2)} km`);
     
     const fireballCircleFs = L.circle([lat, lng], {
         color: '#ffff00',
@@ -348,7 +327,7 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: fireballRadiusKm * 1000,
         weight: 3
     }).addTo(window.mapFullscreen);
-    fireballCircleFs.bindPopup(`<b>� ОГНЕННЫЙ ШАР</b><br>Радиус: ${fireballRadiusKm.toFixed(2)} км`);
+    fireballCircleFs.bindPopup(`<b>🔥 FIREBALL</b><br>Radius: ${fireballRadiusKm.toFixed(2)} km`);
     
     const craterCircleFs = L.circle([lat, lng], {
         color: '#000000',
@@ -357,9 +336,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         radius: (craterDiameterKm / 2) * 1000,
         weight: 3
     }).addTo(window.mapFullscreen);
-    craterCircleFs.bindPopup(`<b>🕳️ КРАТЕР</b><br>Диаметр: ${craterDiameterKm.toFixed(2)} км<br>Локация: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    craterCircleFs.bindPopup(`<b>🕳️ CRATER</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
     
-    // Store ALL damage zone circles globally
     if (!window.craterMarkers) {
         window.craterMarkers = [];
     }
@@ -368,9 +346,8 @@ function addCraterToMap(lat, lng, craterDiameterKm) {
         seismicCircleFs, lightCircleFs, moderateCircleFs, severeCircleFs, fireballCircleFs, craterCircleFs
     );
     
-    console.log(`✅ Enhanced crater with ALL damage zones added to BOTH maps!`);
+    console.log(`✅ Enhanced crater with all damage zones added to both maps!`);
 }
 
-// Export for HTML event handlers
 window.toggleVisualization = toggleVisualization;
 window.addCraterToMap = addCraterToMap;

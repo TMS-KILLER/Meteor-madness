@@ -1,6 +1,6 @@
 // ===================================
-// МОБИЛЬНАЯ АДАПТАЦИЯ - Enhanced Version
-// Touch события и оптимизация для мобильных устройств
+// MOBILE ADAPTATION - Enhanced Version
+// Touch events and optimization for mobile devices
 // ===================================
 
 // Определение мобильного устройства
@@ -548,36 +548,10 @@ function showWelcomeHint() {
     
     setTimeout(() => {
         const hint = document.createElement('div');
-        hint.style.cssText = `
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95));
-            color: white;
-            padding: 16px 28px;
-            border-radius: 28px;
-            font-size: 15px;
-            font-weight: 600;
-            z-index: 10001;
-            animation: fadeInOut 4s ease;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            max-width: 85%;
-            text-align: center;
-            line-height: 1.4;
-        `;
-        
-        hint.innerHTML = '👆 Нажмите на стрелку внизу<br>для открытия панели управления';
+        hint.style.cssText = `position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95)); color: white; padding: 16px 28px; border-radius: 28px; font-size: 15px; font-weight: 600; z-index: 10001; animation: fadeInOut 4s ease; box-shadow: 0 6px 24px rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); max-width: 85%; text-align: center; line-height: 1.4;`;
+        hint.innerHTML = '👆 Tap the arrow below<br>to open the control panel';
         document.body.appendChild(hint);
-        
-        setTimeout(() => {
-            hint.style.opacity = '0';
-            hint.style.transform = 'translateX(-50%) translateY(-20px)';
-            setTimeout(() => hint.remove(), 1000);
-        }, 3000);
-        
+        setTimeout(() => { hint.style.opacity = '0'; hint.style.transform = 'translateX(-50%) translateY(-20px)'; setTimeout(() => hint.remove(), 1000); }, 3000);
         localStorage.setItem('welcomeShown', 'true');
     }, 1500);
 }
