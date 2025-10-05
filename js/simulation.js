@@ -805,19 +805,14 @@ function animateImpact() {
             
             console.log(`📍 Final impact coordinates (with Earth rotation): ${finalLat.toFixed(6)}°, ${finalLng.toFixed(6)}°`);
             
-            // ОБНОВЛЯЕМ impactLocation на финальные координаты для точного кратера
+            // Сохраняем оригинальные координаты цели
             const originalLat = impactLocation.lat;
             const originalLng = impactLocation.lng;
-            impactLocation.lat = finalLat;
-            impactLocation.lng = finalLng;
             
-            // Взрыв при ударе - передаём финальную позицию
-            // createRealisticExplosion теперь использует ОБНОВЛЁННЫЕ impactLocation координаты!
-            createRealisticExplosion(finalEndPos, craterDiameter, kineticEnergy, velocity, diameter);
+            // Взрыв при ударе - передаём финальную позицию И финальные координаты
+            createRealisticExplosion(finalEndPos, craterDiameter, kineticEnergy, velocity, diameter, finalLat, finalLng);
             
-            // Восстанавливаем оригинальные координаты для маркера
-            impactLocation.lat = originalLat;
-            impactLocation.lng = originalLng;
+            // impactLocation остаётся с оригинальными координатами для отображения маркера
             
             scene.remove(asteroid);
             asteroid = null;
@@ -861,11 +856,11 @@ function animateImpact() {
                     </div>
                     <div class="realtime-row" style="margin-top: 10px;">
                         <span class="realtime-label">📍 Impact Coordinates:</span>
-                        <span class="realtime-value">${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°</span>
+                        <span class="realtime-value">${finalLat.toFixed(6)}°, ${finalLng.toFixed(6)}°</span>
                     </div>
                     <div class="realtime-row">
                         <span class="realtime-label">🌍 Location:</span>
-                        <span class="realtime-value">${getLocationDescription(impactLocation.lat, impactLocation.lng)}</span>
+                        <span class="realtime-value">${getLocationDescription(finalLat, finalLng)}</span>
                     </div>
                     <div class="realtime-row">
                         <span class="realtime-label">📏 Asteroid Diameter:</span>
@@ -905,16 +900,17 @@ function animateImpact() {
             
             // ACCURACY CHECK: Calculate coordinates back from finalEndPos
             const verifyLat = Math.asin(finalEndPos.y / earthRadius) * (180 / Math.PI);
-            const verifyLng = Math.atan2(finalEndPos.x, -finalEndPos.z) * (180 / Math.PI);
+            const verifyLng = -Math.atan2(finalEndPos.z, finalEndPos.x) * (180 / Math.PI);
             
             console.log('=== IMPACT ACCURACY CHECK (with Earth rotation) ===');
-            console.log('🎯 Target coordinates:', impactLocation.lat.toFixed(6) + '°', impactLocation.lng.toFixed(6) + '°');
-            console.log('🎯 Actual impact coordinates:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
-            console.log('📏 Latitude deviation:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
-            console.log('📏 Longitude deviation:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');
+            console.log('🎯 Target coordinates:', originalLat.toFixed(6) + '°', originalLng.toFixed(6) + '°');
+            console.log('🎯 Actual impact coordinates:', finalLat.toFixed(6) + '°', finalLng.toFixed(6) + '°');
+            console.log('🎯 Verified 3D back-calculation:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
+            console.log('📏 Latitude deviation:', Math.abs(finalLat - verifyLat).toFixed(8) + '°');
+            console.log('📏 Longitude deviation:', Math.abs(finalLng - verifyLng).toFixed(8) + '°');
             console.log('✅ Crater position in 3D:', finalEndPos);
             
-            if (Math.abs(impactLocation.lat - verifyLat) < 0.001 && Math.abs(impactLocation.lng - verifyLng) < 0.001) {
+            if (Math.abs(finalLat - verifyLat) < 0.001 && Math.abs(finalLng - verifyLng) < 0.001) {
                 console.log('✅ PERFECT ACCURACY - Crater, marker, and map all aligned!');
             } else {
                 console.warn('⚠️ Coordinate mismatch detected!');

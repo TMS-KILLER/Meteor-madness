@@ -1,10 +1,11 @@
 // Реалистичный взрыв на основе данных NASA
-function createRealisticExplosion(position, craterDiameter, kineticEnergy, velocity, diameter) {
+function createRealisticExplosion(position, craterDiameter, kineticEnergy, velocity, diameter, impactLat = null, impactLng = null) {
     const megatons = kineticEnergy / (4.184 * 10**15);
     
     console.log('🌋 === REALISTIC NASA-BASED EXPLOSION ===');
     console.log(`📊 Data: Diameter ${diameter.toFixed(1)}m, Velocity ${velocity.toFixed(1)} km/s`);
     console.log(`💥 Energy: ${megatons.toFixed(2)} megatons, Crater: ${craterDiameter.toFixed(0)}m`);
+    console.log(`📍 Impact coordinates passed: ${impactLat !== null ? `${impactLat.toFixed(6)}°, ${impactLng.toFixed(6)}°` : 'using global impactLocation'}`);
     console.log(`🔥 Fall Visualization: ${showFallVisualization ? 'ON - ENHANCED EFFECTS' : 'OFF - BASIC EFFECTS'}`);
     
     // === 1. МНОГОСЛОЙНАЯ ВСПЫШКА С ЭФФЕКТОМ ВЗРЫВА ===
@@ -173,7 +174,7 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
     createRealisticShockwave(position, craterDiameter, megatons);
     
     // Создание кратера НА ГЛОБУСЕ И НА КАРТЕ
-    createCrater(position, craterDiameter);
+    createCrater(position, craterDiameter, impactLat, impactLng);
     
     // ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ - только если включена визуализация
     if (showFallVisualization) {
@@ -445,145 +446,93 @@ function createMushroomCloud(position, megatons) {
 }
 
 // Создание реалистичного кратера на основе данных NASA - УЛУЧШЕННАЯ ВЕРСИЯ
-function createCrater(position, craterDiameterMeters) {
-    // Масштабируем диаметр кратера для 3D модели
-    const scale = 637100; // метров в одной единице модели Земли
-    const craterRadiusInUnits = (craterDiameterMeters / 2) / scale;
-    
-    // Увеличенный визуальный радиус для лучшей видимости
-    const visualRadius = Math.min(Math.max(craterRadiusInUnits * 80, 0.4), 4);
-    
-    console.log('=== УЛУЧШЕННЫЕ ДАННЫЕ КРАТЕРА (NASA) ===');
-    console.log('Диаметр кратера (м):', craterDiameterMeters.toFixed(2));
-    console.log('Радиус в единицах модели:', craterRadiusInUnits.toFixed(6));
-    console.log('Визуальный радиус (увеличен):', visualRadius.toFixed(3));
-    
-    const depth = visualRadius * 0.2;
+function createCrater(position, craterDiameterMeters, impactLat = null, impactLng = null) {
+    // 1. Геометрические параметры
+    const scaleMetersPerUnit = 637100; // метров в 1 единице модели
+    const craterRadiusUnits = (craterDiameterMeters / 2) / scaleMetersPerUnit;
+    const visualRadius = Math.min(Math.max(craterRadiusUnits * 80, 0.4), 4);
+
+    console.log('🕳️ createCrater(): placing crater EXACTLY at impact world position');
+    console.log(`   Passed impactLat/Lng: ${impactLat !== null ? impactLat.toFixed(6)+'°, '+impactLng.toFixed(6)+'°' : 'none (will derive from vector)'}`);
+
+    // 2. Построение группы кратера (оставляем прежний визуальный стиль)
     const craterGroup = new THREE.Group();
-    
-    // 1. ОСНОВНОЙ КРАТЕР - более темный и заметный
-    const craterGeometry = new THREE.CircleGeometry(visualRadius, 64);
-    const craterMaterial = new THREE.MeshBasicMaterial({
-        color: 0x1a1a1a, // Очень темный
-        transparent: true,
-        opacity: 0.98,
-        side: THREE.DoubleSide
-    });
-    const craterMesh = new THREE.Mesh(craterGeometry, craterMaterial);
-    craterGroup.add(craterMesh);
-    
-    // 2. ВНУТРЕННЕЕ КОЛЬЦО - центральная депрессия
-    const innerRingGeometry = new THREE.RingGeometry(visualRadius * 0.2, visualRadius * 0.7, 64);
-    const innerRingMaterial = new THREE.MeshBasicMaterial({
-        color: 0x0a0a0a, // Почти черный
-        transparent: true,
-        opacity: 0.95,
-        side: THREE.DoubleSide
-    });
-    const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
+
+    const baseMatCommon = { transparent: true, side: THREE.DoubleSide };
+
+    // Основной диск
+    const craterMain = new THREE.Mesh(
+        new THREE.CircleGeometry(visualRadius, 64),
+        new THREE.MeshBasicMaterial({ color: 0x1a1a1a, opacity: 0.98, ...baseMatCommon })
+    );
+    craterGroup.add(craterMain);
+
+    // Внутреннее кольцо
+    const innerRing = new THREE.Mesh(
+        new THREE.RingGeometry(visualRadius * 0.2, visualRadius * 0.7, 64),
+        new THREE.MeshBasicMaterial({ color: 0x0a0a0a, opacity: 0.95, ...baseMatCommon })
+    );
     craterGroup.add(innerRing);
-    
-    // 3. ВНЕШНЕЕ КОЛЬЦО ВЫБРОСА - светлее для контраста
-    const ejectaRingGeometry = new THREE.RingGeometry(visualRadius * 0.95, visualRadius * 1.8, 64);
-    const ejectaRingMaterial = new THREE.MeshBasicMaterial({
-        color: 0x7a7a7a, // Светло-серый
-        transparent: true,
-        opacity: 0.75,
-        side: THREE.DoubleSide
-    });
-    const ejectaRing = new THREE.Mesh(ejectaRingGeometry, ejectaRingMaterial);
+
+    // Кольцо выброса
+    const ejectaRing = new THREE.Mesh(
+        new THREE.RingGeometry(visualRadius * 0.95, visualRadius * 1.8, 64),
+        new THREE.MeshBasicMaterial({ color: 0x7a7a7a, opacity: 0.75, ...baseMatCommon })
+    );
     craterGroup.add(ejectaRing);
-    
-    // 4. ЛУЧИ ВЫБРОСА (radial ejecta rays) - как у настоящих кратеров
+
+    // Радиальные лучи
     for (let i = 0; i < 12; i++) {
         const angle = (i / 12) * Math.PI * 2;
-        const rayLength = visualRadius * (2 + Math.random() * 0.5);
-        const rayWidth = visualRadius * 0.15;
-        
-        const rayGeometry = new THREE.PlaneGeometry(rayWidth, rayLength);
-        const rayMaterial = new THREE.MeshBasicMaterial({
-            color: 0x6a6a6a,
-            transparent: true,
-            opacity: 0.5 + Math.random() * 0.2,
-            side: THREE.DoubleSide
-        });
-        const ray = new THREE.Mesh(rayGeometry, rayMaterial);
-        
-        // Позиционируем луч
-        const rayDistance = visualRadius * 1.4;
-        ray.position.x = Math.cos(angle) * rayDistance;
-        ray.position.y = Math.sin(angle) * rayDistance;
+        const ray = new THREE.Mesh(
+            new THREE.PlaneGeometry(visualRadius * 0.15, visualRadius * (2 + Math.random() * 0.5)),
+            new THREE.MeshBasicMaterial({ color: 0x6a6a6a, opacity: 0.5 + Math.random() * 0.2, ...baseMatCommon })
+        );
+        const dist = visualRadius * 1.4;
+        ray.position.set(Math.cos(angle) * dist, Math.sin(angle) * dist, 0);
         ray.rotation.z = angle;
-        
         craterGroup.add(ray);
     }
-    
-    // 5. ЦЕНТРАЛЬНАЯ ГОРКА (для крупных кратеров)
+
     if (visualRadius > 1) {
-        const centralPeakGeometry = new THREE.CircleGeometry(visualRadius * 0.15, 32);
-        const centralPeakMaterial = new THREE.MeshBasicMaterial({
-            color: 0x4a4a4a,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide
-        });
-        const centralPeak = new THREE.Mesh(centralPeakGeometry, centralPeakMaterial);
+        const centralPeak = new THREE.Mesh(
+            new THREE.CircleGeometry(visualRadius * 0.15, 32),
+            new THREE.MeshBasicMaterial({ color: 0x4a4a4a, opacity: 0.8, ...baseMatCommon })
+        );
         craterGroup.add(centralPeak);
     }
-    
-    // Позиционируем кратер на поверхности Земли
+
+    // 3. Точное позиционирование
     const earthRadius = window.earthRadius || 15;
-    
-    // ИСПОЛЬЗУЕМ ИСХОДНЫЕ КООРДИНАТЫ из impactLocation для точного позиционирования
-    let craterLat, craterLng;
-    
-    if (impactLocation && impactLocation.lat !== undefined && impactLocation.lng !== undefined) {
-        // Используем исходные координаты выбора
-        craterLat = impactLocation.lat;
-        craterLng = impactLocation.lng;
-        console.log(`🎯 Crater using ORIGINAL target coordinates: ${craterLat.toFixed(6)}°, ${craterLng.toFixed(6)}°`);
-        
-        // Пересчитываем позицию кратера с ИНВЕРТИРОВАННОЙ долготой (как в других файлах)
-        const latRad = craterLat * Math.PI / 180;
-        const lngRad = -craterLng * Math.PI / 180; // ИНВЕРСИЯ!
-        
-        const craterX = earthRadius * Math.cos(latRad) * Math.cos(lngRad);
-        const craterY = earthRadius * Math.sin(latRad);
-        const craterZ = earthRadius * Math.cos(latRad) * Math.sin(lngRad);
-        
-        craterGroup.position.set(craterX, craterY, craterZ);
-        craterGroup.position.normalize().multiplyScalar(earthRadius + 0.02);
-    } else {
-        // Fallback - используем переданную позицию
-        craterGroup.position.copy(position).normalize().multiplyScalar(earthRadius + 0.02);
-        
-        const radius = earthRadius;
-        const normalizedPos = position.clone().normalize().multiplyScalar(radius);
-        craterLat = Math.asin(normalizedPos.y / radius) * 180 / Math.PI;
-        // ИНВЕРТИРОВАННАЯ ФОРМУЛА: -atan2(Z, X)
-        craterLng = -Math.atan2(normalizedPos.z, normalizedPos.x) * 180 / Math.PI;
-        console.log(`⚠️ Crater computed from 3D position: ${craterLat.toFixed(6)}°, ${craterLng.toFixed(6)}°`);
+
+    // position — мировая позиция точки удара (finalEndPos). Нам нужна ЛОКАЛЬНАЯ относительно Earth.
+    let localPos = position.clone();
+    if (earth && earth.worldToLocal) {
+        localPos = earth.worldToLocal(localPos); // преобразуем в систему Earth
     }
-    
+    // Нормализуем на радиус поверхности
+    localPos.normalize().multiplyScalar(earthRadius + 0.02);
+    craterGroup.position.copy(localPos);
+
+    // 4. Вычисляем широту/долготу ИЗ ФАКТИЧЕСКОГО ВЕКТОРА (единственный источник истины)
+    const craterLat = Math.asin(localPos.y / earthRadius) * 180 / Math.PI;
+    const craterLng = -Math.atan2(localPos.z, localPos.x) * 180 / Math.PI; // инверсия как везде
+
     craterGroup.lookAt(0, 0, 0);
-    
     earth.add(craterGroup);
     crater = craterGroup;
-    
-    console.log(`\n🌍 === FINAL IMPACT COORDINATES VERIFICATION ===`);
-    console.log(`📍 Selected on map: ${impactLocation ? `${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°` : 'N/A'}`);
-    console.log(`📍 Crater location: ${craterLat.toFixed(6)}°, ${craterLng.toFixed(6)}°`);
-    console.log(`📍 Shockwave center: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
-    console.log(`✅ ALL COORDINATES MATCH - crater and shockwave at same location!\n`);
-    
-    // Add crater to Leaflet map too! - используем ТЕ ЖЕ координаты
-    if (window.addCraterToMap) {
-        const craterDiameterKm = craterDiameterMeters / 1000;
-        window.addCraterToMap(craterLat, craterLng, craterDiameterKm);
-        console.log(`🗺️ Crater added to map: ${craterDiameterKm.toFixed(2)} km at ${craterLat.toFixed(4)}°, ${craterLng.toFixed(4)}°`);
+
+    console.log('🌍 FINAL CRATER PLACEMENT');
+    console.log(`   Derived from vector -> ${craterLat.toFixed(6)}°, ${craterLng.toFixed(6)}°`);
+    if (impactLat !== null) {
+        console.log(`   Passed coords      -> ${impactLat.toFixed(6)}°, ${impactLng.toFixed(6)}°`);
+        console.log(`   ΔLat: ${(craterLat-impactLat).toFixed(6)}°, ΔLng: ${(craterLng-impactLng).toFixed(6)}°`);
     }
-    
-    console.log(`✅ IMPACT COMPLETE - All effects synchronized!`);
+
+    // 5. Синхронизация с картой Leaflet
+    if (window.addCraterToMap) {
+        window.addCraterToMap(craterLat, craterLng, craterDiameterMeters / 1000);
+    }
 }
 
 // === НОВАЯ ФУНКЦИЯ: Пылевая волна по поверхности ===
