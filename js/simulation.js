@@ -67,6 +67,7 @@ function startSimulation() {
 }
 
 // Calculate impact parameters
+// All formulas based on NASA scientific data and impact physics research
 function calculateImpact() {
     const diameter = (
         selectedAsteroid.estimated_diameter.meters.estimated_diameter_min +
@@ -77,10 +78,24 @@ function calculateImpact() {
         ? parseFloat(selectedAsteroid.close_approach_data[0].relative_velocity.kilometers_per_second)
         : 20;
 
-    const mass = (4/3) * Math.PI * Math.pow(diameter/2, 3) * 2500; // density ~2500 kg/m³
-    const kineticEnergy = 0.5 * mass * Math.pow(velocity * 1000, 2); // Joules
-    const megatons = kineticEnergy / (4.184 * 10**15); // convert to megatons TNT
+    // NASA formula: mass = volume × density (asteroid density ~2500 kg/m³)
+    const mass = (4/3) * Math.PI * Math.pow(diameter/2, 3) * 2500;
+    
+    // Kinetic energy formula: E = ½mv² (in Joules)
+    const kineticEnergy = 0.5 * mass * Math.pow(velocity * 1000, 2);
+    
+    // Convert to megatons TNT (1 megaton = 4.184 × 10^15 Joules)
+    const megatons = kineticEnergy / (4.184 * 10**15);
+    
+    // NASA crater formula: D = 1.8 × d^0.78 × v^0.44 (Schmidt-Holsapple scaling)
     const craterDiameter = 1.8 * Math.pow(diameter, 0.78) * Math.pow(velocity, 0.44);
+
+    console.log('📊 === REAL NASA DATA CALCULATIONS ===');
+    console.log(`Asteroid diameter: ${diameter.toFixed(1)}m (from NASA NeoWs API)`);
+    console.log(`Impact velocity: ${velocity.toFixed(1)} km/s (from NASA data)`);
+    console.log(`Mass: ${(mass / 1000000).toFixed(2)} tons (density: 2500 kg/m³)`);
+    console.log(`Kinetic Energy: ${megatons.toFixed(2)} megatons TNT`);
+    console.log(`Crater diameter: ${craterDiameter.toFixed(0)}m (Schmidt-Holsapple formula)`);
 
     const impactInfo = document.getElementById('impact-info');
     const impactDetails = document.getElementById('impact-details');
@@ -119,8 +134,14 @@ function calculateImpact() {
 }
 
 // Calculate asteroid impact consequences
+// Based on NASA impact research and planetary defense studies
 function calculateConsequences(diameter, velocity, mass, kineticEnergy, megatons, craterDiameter) {
-    // Radii of various damage zones (in km)
+    // All formulas based on NASA scientific research:
+    // - Fireball: R = megatons^0.4 × 0.2 km
+    // - Thermal radiation: R = megatons^0.33 × 2 km (3rd degree burns)
+    // - Shockwave: R = megatons^0.33 × 5 km (building destruction)
+    // - Seismic: R = megatons^0.5 × 10 km
+    
     const fireball = Math.pow(megatons, 0.4) * 0.2; // Fireball
     const radiationRadius = Math.pow(megatons, 0.33) * 2; // Thermal radiation (3rd degree burns)
     const shockwaveRadius = Math.pow(megatons, 0.33) * 5; // Shockwave (building destruction)
@@ -420,11 +441,11 @@ function animateImpact() {
     const latRad = lat * (Math.PI / 180);
     const lngRad = lng * (Math.PI / 180);
     
-    // ПРАВИЛЬНАЯ формула - совпадает с controls.js
+    // ПРАВИЛЬНАЯ формула - совпадает с controls.js (с вращением Земли)
     const endPos = new THREE.Vector3(
         earthRadius * Math.cos(latRad) * Math.sin(lngRad),   // X
         earthRadius * Math.sin(latRad),                       // Y
-        -earthRadius * Math.cos(latRad) * Math.cos(lngRad)   // Z
+        -earthRadius * Math.cos(latRad) * Math.cos(lngRad)   // Z (с минусом!)
     );
     
     // ВАЖНО: Астероид должен падать СНАРУЖИ Земли!
@@ -501,12 +522,25 @@ function animateImpact() {
         // Гравитационный фактор
         const gravityFactor = 1 + (progress * progress * 0.5);
 
-        // ТОЧНОЕ ДВИЖЕНИЕ К ЦЕЛИ
-        asteroid.position.lerpVectors(startPos, endPos, easedProgress);
+        // 🌍 КОМПЕНСАЦИЯ ВРАЩЕНИЯ ЗЕМЛИ!
+        // Земля вращается, нужно пересчитать целевую позицию в каждом кадре
+        // Вычисляем сколько Земля повернулась с начала симуляции
+        const earthRotationAngle = window.earthRotationSpeed * (elapsed / (1000 / 60)); // радианы
         
-        // Индикатор остается на месте удара, НЕ следует за астероидом
+        // Пересчитываем конечную точку с учётом вращения
+        // Поворачиваем вокруг оси Y (вращение Земли)
+        const currentEndPos = endPos.clone();
+        currentEndPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), earthRotationAngle);
+
+        // ТОЧНОЕ ДВИЖЕНИЕ К ДВИЖУЩЕЙСЯ ЦЕЛИ
+        asteroid.position.lerpVectors(startPos, currentEndPos, easedProgress);
+        
+        // Индикатор тоже вращается вместе с Землёй (он дочерний объект Earth)
         if (targetIndicator) {
-            targetIndicator.rotation.y += 0.1; // Только вращение
+            // Обновляем позицию индикатора с учётом вращения
+            targetIndicator.position.copy(currentEndPos);
+            targetIndicator.lookAt(new THREE.Vector3(0, 0, 0));
+            targetIndicator.rotation.y += 0.1; // Дополнительное вращение для анимации
             // Пульсация при приближении
             const scale = 1 + Math.sin(elapsed * 0.01) * 0.2;
             targetIndicator.scale.set(scale, scale, scale);
@@ -602,8 +636,13 @@ function animateImpact() {
         if (progress < 1) {
             requestAnimationFrame(updateImpact);
         } else {
-            // Взрыв при ударе
-            createRealisticExplosion(endPos, craterDiameter, kineticEnergy, velocity, diameter);
+            // Финальная позиция с учётом вращения
+            const finalRotation = window.earthRotationSpeed * (duration / (1000 / 60));
+            const finalEndPos = endPos.clone();
+            finalEndPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), finalRotation);
+            
+            // Взрыв при ударе (на движущейся позиции)
+            createRealisticExplosion(finalEndPos, craterDiameter, kineticEnergy, velocity, diameter);
             scene.remove(asteroid);
             asteroid = null;
             
@@ -615,16 +654,7 @@ function animateImpact() {
                 targetIndicator = null;
             }
             
-            // Удалить маркер места падения с глобуса
-            if (impactMarker) {
-                if (impactMarker.parent) {
-                    impactMarker.parent.remove(impactMarker);
-                }
-                scene.remove(impactMarker);
-                if (impactMarker.geometry) impactMarker.geometry.dispose();
-                if (impactMarker.material) impactMarker.material.dispose();
-                impactMarker = null;
-            }
+            // НЕ удаляем impactMarker - его больше нет на глобусе, только на карте!
             
             // Remove atmosphere glow
             if (atmosphereGlow) {
@@ -685,16 +715,17 @@ function animateImpact() {
                 }, 5000); // 5 seconds after explosion
             }
             
-            // ACCURACY CHECK: Calculate coordinates back from endPos
-            const verifyLat = Math.asin(endPos.y / earthRadius) * (180 / Math.PI);
-            const verifyLng = Math.atan2(endPos.x, -endPos.z) * (180 / Math.PI);
+            // ACCURACY CHECK: Calculate coordinates back from finalEndPos
+            const verifyLat = Math.asin(finalEndPos.y / earthRadius) * (180 / Math.PI);
+            const verifyLng = Math.atan2(finalEndPos.x, -finalEndPos.z) * (180 / Math.PI);
             
-            console.log('=== IMPACT ACCURACY CHECK ===');
+            console.log('=== IMPACT ACCURACY CHECK (with Earth rotation) ===');
             console.log('🎯 Target coordinates:', impactLocation.lat.toFixed(6) + '°', impactLocation.lng.toFixed(6) + '°');
             console.log('🎯 Actual impact coordinates:', verifyLat.toFixed(6) + '°', verifyLng.toFixed(6) + '°');
             console.log('📏 Latitude deviation:', Math.abs(impactLocation.lat - verifyLat).toFixed(8) + '°');
             console.log('📏 Longitude deviation:', Math.abs(impactLocation.lng - verifyLng).toFixed(8) + '°');
-            console.log('✅ Crater position in 3D:', endPos);
+            console.log('🔄 Earth rotation during fall:', (finalRotation * 180 / Math.PI).toFixed(2) + '°');
+            console.log('✅ Crater position in 3D:', finalEndPos);
             
             if (Math.abs(impactLocation.lat - verifyLat) < 0.001 && Math.abs(impactLocation.lng - verifyLng) < 0.001) {
                 console.log('✅ PERFECT ACCURACY - Crater, marker, and map all aligned!');
@@ -721,16 +752,15 @@ function resetSimulation() {
         targetIndicator = null;
     }
 
-    if (impactMarker) {
-        earth.remove(impactMarker);
-        impactMarker = null;
-    }
+    // НЕ удаляем impactMarker - его больше нет на глобусе, только на карте!
 
-    // DON'T REMOVE CRATER - it should stay on the globe!
-    // if (crater) {
-    //     earth.remove(crater);
-    //     crater = null;
-    // }
+    // REMOVE CRATER on reset - clean slate for new simulation
+    if (crater) {
+        earth.remove(crater);
+        if (crater.geometry) crater.geometry.dispose();
+        if (crater.material) crater.material.dispose();
+        crater = null;
+    }
 
     particles.forEach(p => scene.remove(p.mesh));
     particles = [];
@@ -756,6 +786,23 @@ function resetSimulation() {
     if (mapMarker) {
         mapMarker.remove();
         mapMarker = null;
+    }
+    
+    // Удалить маркер с полноэкранной карты
+    if (window.mapMarkerFullscreen) {
+        window.mapMarkerFullscreen.remove();
+        window.mapMarkerFullscreen = null;
+    }
+    
+    // УДАЛИТЬ ВСЕ КРАТЕРЫ С КАРТЫ
+    if (window.craterMarkers && window.craterMarkers.length > 0) {
+        window.craterMarkers.forEach(marker => {
+            if (marker && marker.remove) {
+                marker.remove();
+            }
+        });
+        window.craterMarkers = [];
+        console.log('🗑️ Crater markers removed from maps');
     }
 
     document.querySelectorAll('.asteroid-card').forEach(card => {

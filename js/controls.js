@@ -34,29 +34,23 @@ function setImpactLocation(lat, lng, point = null) {
     // ИСПРАВЛЕННАЯ ФОРМУЛА для совпадения с картой
     // Стандартная сферическая система координат для equirectangular текстуры
     const radius = 10; // Радиус Земли в модели
-    
-    // Конвертируем градусы в радианы
-    const latRad = lat * (Math.PI / 180);
-    const lngRad = lng * (Math.PI / 180);
-    
-    // ПРАВИЛЬНАЯ формула для Three.js с стандартной текстурой Земли
-    // Longitude 0° = -Z axis, Latitude 0° = equator
+    const latRad = lat * Math.PI / 180;
+    const lngRad = lng * Math.PI / 180;
+
+    // ВАЖНО: Текстура сдвинута на offset.x = 0.5, но координаты стандартные
+    // Формула остаётся прежней, т.к. сдвиг только визуальный (в UV-пространстве)
+    // 0° lng → -Z ось (Гринвич спереди благодаря offset.x)
     const localPoint = new THREE.Vector3(
-        radius * Math.cos(latRad) * Math.sin(lngRad),   // X
-        radius * Math.sin(latRad),                       // Y
-        -radius * Math.cos(latRad) * Math.cos(lngRad)   // Z (negative because 0° lng is at -Z)
+        radius * Math.cos(latRad) * Math.sin(lngRad),
+        radius * Math.sin(latRad),
+        -radius * Math.cos(latRad) * Math.cos(lngRad)  // Минус для правильной ориентации
     );
-    
     impactLocation.point = localPoint;
 
-    console.log(`✅ COORDINATES SET: Lat=${lat.toFixed(6)}°, Lng=${lng.toFixed(6)}°`);
-    console.log('✅ 3D Position (calculated):', localPoint);
-    console.log(`   X=${localPoint.x.toFixed(4)}, Y=${localPoint.y.toFixed(4)}, Z=${localPoint.z.toFixed(4)}`);
-    
-    // ПРОВЕРКА: Пересчитываем координаты обратно из 3D позиции
-    const verifyLat = Math.asin(localPoint.y / radius) * (180 / Math.PI);
-    const verifyLng = Math.atan2(localPoint.x, -localPoint.z) * (180 / Math.PI);
-    console.log(`🔍 VERIFICATION: Lat=${verifyLat.toFixed(6)}°, Lng=${verifyLng.toFixed(6)}°`);
+    // Верификация (обратное преобразование):
+    const verifyLat = Math.asin(localPoint.y / radius) * 180 / Math.PI;
+    const verifyLng = Math.atan2(localPoint.x, -localPoint.z) * 180 / Math.PI;
+    console.log(`🔍 VERIFICATION (new orientation): Lat=${verifyLat.toFixed(6)}°, Lng=${verifyLng.toFixed(6)}°`);
     console.log(`📏 Deviation: Lat=${Math.abs(lat - verifyLat).toFixed(8)}°, Lng=${Math.abs(lng - verifyLng).toFixed(8)}°`);
     
     if (Math.abs(lat - verifyLat) > 0.001 || Math.abs(lng - verifyLng) > 0.001) {
@@ -65,7 +59,8 @@ function setImpactLocation(lat, lng, point = null) {
         console.log('✅ Coordinates verified - perfect match!');
     }
 
-    // Создать маркер НА ЗЕМЛЕ (будет вращаться вместе с Землей)
+    // НЕ создаем маркер на глобусе - он будет только на карте!
+    // Удаляем старый маркер с глобуса если он есть
     if (impactMarker) {
         // Правильно удаляем старый маркер
         if (impactMarker.parent) {
@@ -93,39 +88,11 @@ function setImpactLocation(lat, lng, point = null) {
         });
         impactMarker = null;
     }
-
-    const markerGeometry = new THREE.SphereGeometry(0.4, 16, 16);
-    const markerMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xff0000,
-        transparent: true,
-        opacity: 0.9
-    });
-    impactMarker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Устанавливаем маркер ТОЧНО на вычисленную позицию
-    // Немного выше поверхности для видимости (10.2 вместо 10.0)
-    impactMarker.position.copy(localPoint).normalize().multiplyScalar(10.2);
-    earth.add(impactMarker); // Привязан к Земле - будет вращаться вместе с ней
-    
-    // Добавим пульсирующее кольцо, направленное к центру Земли
-    const ringGeometry = new THREE.RingGeometry(0.5, 0.6, 32);
-    const ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.7
-    });
-    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    // Направляем кольцо перпендикулярно к поверхности
-    const normalVector = localPoint.clone().normalize();
-    ring.lookAt(normalVector.multiplyScalar(100)); // Смотрит от центра Земли
-    impactMarker.add(ring);
+    console.log(`🌍 Impact target set at ${lat.toFixed(4)}°, ${lng.toFixed(4)}° (marker only on map, NOT on globe)`);
 
     // Обновить маркер на карте
     updateMapMarker(lat, lng);
-    
-    console.log(`🗺️ Map marker updated at: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
-    console.log(`🌍 3D marker position on globe:`, impactMarker.position);
 
     checkReadyToStart();
 }
@@ -150,16 +117,14 @@ function testCoordinates() {
         const latRad = point.lat * (Math.PI / 180);
         const lngRad = point.lng * (Math.PI / 180);
         
-        // ПРАВИЛЬНАЯ формула
+        // Формула с минусом для -Z (правильная ориентация)
         const pos = new THREE.Vector3(
             radius * Math.cos(latRad) * Math.sin(lngRad),
             radius * Math.sin(latRad),
             -radius * Math.cos(latRad) * Math.cos(lngRad)
         );
-        
-        // Проверка обратного преобразования
-        const verifyLat = Math.asin(pos.y / radius) * (180 / Math.PI);
-        const verifyLng = Math.atan2(pos.x, -pos.z) * (180 / Math.PI);
+        const verifyLat = Math.asin(pos.y / radius) * 180 / Math.PI;
+        const verifyLng = Math.atan2(pos.x, -pos.z) * 180 / Math.PI;
         
         console.log(`${point.name}:`);
         console.log(`  3D: X=${pos.x.toFixed(3)}, Y=${pos.y.toFixed(3)}, Z=${pos.z.toFixed(3)}`);
@@ -187,6 +152,7 @@ function showTestMarkers() {
         const latRad = city.lat * (Math.PI / 180);
         const lngRad = city.lng * (Math.PI / 180);
         
+        // Формула с минусом для -Z
         const pos = new THREE.Vector3(
             radius * Math.cos(latRad) * Math.sin(lngRad),
             radius * Math.sin(latRad),
@@ -223,7 +189,8 @@ window.clearTestMarkers = clearTestMarkers;
 // Проверка готовности к запуску
 function checkReadyToStart() {
     const startButton = document.getElementById('start-simulation');
-    if (selectedAsteroid && impactMarker) {
+    // Проверяем наличие астероида и координат (не нужен impactMarker на глобусе)
+    if (selectedAsteroid && impactLocation && impactLocation.lat !== undefined) {
         startButton.disabled = false;
     }
 }
@@ -232,6 +199,7 @@ function checkReadyToStart() {
 function updateMapMarker(lat, lng) {
     if (!window.mapInitialized) return;
     
+    // ПОКАЗЫВАЕМ геомаркер НА КАРТЕ (но не на глобусе!)
     // Update marker on small map
     if (mapMarker) {
         mapMarker.setLatLng([lat, lng]);
@@ -246,7 +214,7 @@ function updateMapMarker(lat, lng) {
                 shadowSize: [41, 41]
             })
         }).addTo(window.map);
-        mapMarker.bindPopup('Impact Location').openPopup();
+        mapMarker.bindPopup('🎯 Impact Target').openPopup();
     }
     
     window.map.setView([lat, lng], 5);
@@ -266,10 +234,12 @@ function updateMapMarker(lat, lng) {
                     shadowSize: [41, 41]
                 })
             }).addTo(window.mapFullscreen);
-            window.mapMarkerFullscreen.bindPopup('Impact Location');
+            window.mapMarkerFullscreen.bindPopup('🎯 Impact Target');
         }
         window.mapFullscreen.setView([lat, lng], 5);
     }
+    
+    console.log(`🗺️ Map marker updated at: ${lat.toFixed(4)}°, ${lng.toFixed(4)}° (visible on maps only)`);
 }
 
 // Toggle fall visualization
@@ -290,37 +260,38 @@ function toggleVisualization() {
 function addCraterToMap(lat, lng, craterDiameterKm) {
     if (!window.mapInitialized) return;
     
+    console.log(`🗺️ Adding crater to maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    
     // Create a circle to show crater on small map
     const craterCircle = L.circle([lat, lng], {
         color: '#ff0000',
         fillColor: '#8b0000',
         fillOpacity: 0.5,
-        radius: (craterDiameterKm / 2) * 1000, // Convert km to meters
+        radius: (craterDiameterKm / 2) * 1000, // Convert km to meters for Leaflet
         weight: 2
     }).addTo(window.map);
     
-    craterCircle.bindPopup(`<b>Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    craterCircle.bindPopup(`<b>🕳️ Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
     
     // Add to fullscreen map too
-    if (window.mapFullscreen) {
-        const craterCircleFullscreen = L.circle([lat, lng], {
-            color: '#ff0000',
-            fillColor: '#8b0000',
-            fillOpacity: 0.5,
-            radius: (craterDiameterKm / 2) * 1000,
-            weight: 2
-        }).addTo(window.mapFullscreen);
-        
-        craterCircleFullscreen.bindPopup(`<b>Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
-    }
+    const craterCircleFullscreen = L.circle([lat, lng], {
+        color: '#ff0000',
+        fillColor: '#8b0000',
+        fillOpacity: 0.5,
+        radius: (craterDiameterKm / 2) * 1000,
+        weight: 2
+    }).addTo(window.mapFullscreen);
     
-    // Store crater circles globally so they persist
+    craterCircleFullscreen.bindPopup(`<b>🕳️ Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    
+    // Store BOTH crater circles globally so they persist
     if (!window.craterMarkers) {
         window.craterMarkers = [];
     }
     window.craterMarkers.push(craterCircle);
+    window.craterMarkers.push(craterCircleFullscreen);
     
-    console.log(`✅ Crater added to map: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`✅ Crater added to BOTH maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
 }
 
 // Export for HTML event handlers
