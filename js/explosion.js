@@ -6,11 +6,11 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
     console.log(`📊 Data: Diameter ${diameter.toFixed(1)}m, Velocity ${velocity.toFixed(1)} km/s`);
     console.log(`💥 Energy: ${megatons.toFixed(2)} megatons, Crater: ${craterDiameter.toFixed(0)}m`);
     
-    // === 1. РЕАЛИСТИЧНАЯ ВСПЫШКА (быстрая, не пульсирующая) ===
-    const flashSize = Math.min(4 + (megatons / 40), 10);
+    // === 1. УСИЛЕННАЯ РЕАЛИСТИЧНАЯ ВСПЫШКА ===
+    const flashSize = Math.min(5 + (megatons / 20), 15); // Увеличенный размер
     const flashGeometry = new THREE.SphereGeometry(flashSize, 32, 32);
     const flashMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffFFee,
+        color: 0xffFFff, // Ярко-белый
         transparent: true,
         opacity: 1
     });
@@ -18,16 +18,30 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
     flash.position.copy(position);
     scene.add(flash);
 
-    // Быстрое расширение и затухание (не пульсация!)
+    // Более медленное и впечатляющее расширение
     let flashFrame = 0;
-    const flashDuration = 12;
+    const flashDuration = 18; // Увеличена длительность
     const flashInterval = setInterval(() => {
         flashFrame++;
         const progress = flashFrame / flashDuration;
         
-        // Экспоненциальное расширение, быстрое затухание
-        flash.scale.setScalar(1 + progress * 2);
-        flash.material.opacity = Math.pow(1 - progress, 2.5);
+        // Более плавное расширение с несколькими фазами
+        const expansionPhase = progress < 0.3 ? progress * 8 : (progress < 0.6 ? 2.4 + (progress - 0.3) * 2 : 3 + (progress - 0.6) * 1.5);
+        flash.scale.setScalar(1 + expansionPhase);
+        
+        // Изменение цвета от белого к желтому к оранжевому
+        if (progress < 0.2) {
+            flash.material.color.setHex(0xffffff); // Белый
+        } else if (progress < 0.5) {
+            flash.material.color.setHex(0xffff88); // Желтоватый
+        } else if (progress < 0.8) {
+            flash.material.color.setHex(0xffaa44); // Оранжевый
+        } else {
+            flash.material.color.setHex(0xff6622); // Красно-оранжевый
+        }
+        
+        // Плавное затухание
+        flash.material.opacity = Math.pow(1 - progress, 2);
 
         if (flashFrame >= flashDuration) {
             scene.remove(flash);
@@ -37,56 +51,74 @@ function createRealisticExplosion(position, craterDiameter, kineticEnergy, veloc
         }
     }, 40);
 
-    // === 2. РЕАЛИСТИЧНЫЕ ОБЛОМКИ (не круглые шарики!) ===
-    let particleCount = Math.min(120 + Math.floor(diameter / 3), 600);
+
+    // === 2. УЛУЧШЕННЫЕ РЕАЛИСТИЧНЫЕ ОБЛОМКИ ===
+    let particleCount = Math.min(150 + Math.floor(diameter / 2), 800);
     if (window.MOBILE_PARTICLE_REDUCTION) {
         particleCount = Math.floor(particleCount * window.MOBILE_PARTICLE_REDUCTION);
     }
     
+    console.log(`🔥 Creating ${particleCount} debris particles`);
+    
     for (let i = 0; i < particleCount; i++) {
-        // Неправильные формы обломков (Box вместо Sphere)
-        const size = 0.06 + Math.random() * 0.18;
-        const particleGeometry = new THREE.BoxGeometry(
-            size, 
-            size * (0.4 + Math.random() * 0.8), 
-            size * (0.3 + Math.random() * 0.7)
-        );
+        // Разнообразные формы обломков
+        const size = 0.08 + Math.random() * 0.25;
+        const shapeType = Math.random();
+        let particleGeometry;
         
-        // Реалистичные цвета раскаленной материи
+        if (shapeType < 0.4) {
+            // Неправильные кубы
+            particleGeometry = new THREE.BoxGeometry(
+                size, 
+                size * (0.3 + Math.random() * 1.2), 
+                size * (0.2 + Math.random() * 1.0)
+            );
+        } else if (shapeType < 0.7) {
+            // Тетраэдры (осколки)
+            particleGeometry = new THREE.TetrahedronGeometry(size * 0.8);
+        } else {
+            // Октаэдры
+            particleGeometry = new THREE.OctahedronGeometry(size * 0.7);
+        }
+        
+        // Реалистичные цвета раскаленной материи - улучшенная градация
         const temp = Math.random();
         let color;
-        if (temp > 0.85) color = 0xffffff; // Белый - сверхгорячий
-        else if (temp > 0.6) color = 0xffee66; // Светло-желтый
-        else if (temp > 0.35) color = 0xff9933; // Оранжевый
-        else color = 0xdd3311; // Темно-красный
+        if (temp > 0.9) color = 0xffffff; // Белый - сверхгорячий (10%)
+        else if (temp > 0.7) color = 0xffff99; // Светло-желтый (20%)
+        else if (temp > 0.45) color = 0xffcc44; // Желто-оранжевый (25%)
+        else if (temp > 0.25) color = 0xff9944; // Оранжевый (20%)
+        else if (temp > 0.1) color = 0xff5522; // Красно-оранжевый (15%)
+        else color = 0xcc3311; // Темно-красный (10%)
         
         const particleMaterial = new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
-            opacity: 0.95
+            opacity: 0.98
         });
         const particle = new THREE.Mesh(particleGeometry, particleMaterial);
         particle.position.copy(position);
 
-        // Реалистичная баллистика
-        const explosionSpeed = 0.25 + (velocity / 50);
+        // Улучшенная баллистика с учетом энергии взрыва
+        const explosionSpeed = 0.3 + (velocity / 40) + (megatons / 100);
         const velocity3D = new THREE.Vector3(
             (Math.random() - 0.5) * 2,
-            Math.abs(Math.random() - 0.3), // Больше вверх
+            Math.abs(Math.random() - 0.2) * 1.5, // Больше вверх и в стороны
             (Math.random() - 0.5) * 2
-        ).normalize().multiplyScalar(Math.random() * explosionSpeed + 0.1);
+        ).normalize().multiplyScalar(Math.random() * explosionSpeed + 0.15);
 
         scene.add(particle);
         explosionParticles.push({ 
             mesh: particle, 
             velocity: velocity3D, 
-            life: 1.5 + Math.random() * 0.8,
+            life: 1.8 + Math.random() * 1.2, // Дольше живут
             rotation: new THREE.Vector3(
-                (Math.random() - 0.5) * 0.15,
-                (Math.random() - 0.5) * 0.15,
-                (Math.random() - 0.5) * 0.15
+                (Math.random() - 0.5) * 0.2,
+                (Math.random() - 0.5) * 0.2,
+                (Math.random() - 0.5) * 0.2
             ),
-            fadeSpeed: 0.006 + Math.random() * 0.006
+            fadeSpeed: 0.005 + Math.random() * 0.007,
+            initialColor: color // Сохраняем для охлаждения
         });
     }
 
@@ -110,31 +142,33 @@ function createRealisticShockwave(position, craterDiameter, megatons) {
     
     // Радиусы для разных зон поражения (в км):
     // - Зона огненного шара: R = 0.28 * (E^0.33)
-    // - Зона сильных разрушений (20 psi): R = 0.23 * (E^0.33)  
-    // - Зона умеренных разрушений (5 psi): R = 0.54 * (E^0.33)
-    // - Зона легких повреждений (1 psi): R = 1.28 * (E^0.33)
+    // - Зона сильных разрушений (20 psi): R = 0.54 * (E^0.33)  
+    // - Зона умеренных разрушений (5 psi): R = 1.28 * (E^0.33)
+    // - Зона легких повреждений (1 psi): R = 2.5 * (E^0.33)
     
     const fireballRadiusKm = 0.28 * Math.pow(kilotons, 0.33);
     const severeRadiusKm = 0.54 * Math.pow(kilotons, 0.33);
     const moderateRadiusKm = 1.28 * Math.pow(kilotons, 0.33);
+    const lightRadiusKm = 2.5 * Math.pow(kilotons, 0.33);
     
-    // Конвертируем в единицы модели (1 единица = ~637 км радиус Земли / 15 единиц)
-    const scale = 637.1 / 15; // км на единицу
-    const fireballRadius = Math.min(fireballRadiusKm / scale, 4);
-    const severeRadius = Math.min(severeRadiusKm / scale, 7);
-    const moderateRadius = Math.min(moderateRadiusKm / scale, 10);
+    // Конвертируем в единицы модели (1 единица = ~424.7 км при радиусе Земли 15 единиц)
+    const scale = 6371 / 15; // км на единицу (точный расчет)
+    const fireballRadius = Math.min(fireballRadiusKm / scale, 5);
+    const severeRadius = Math.min(severeRadiusKm / scale, 9);
+    const moderateRadius = Math.min(moderateRadiusKm / scale, 14);
+    const lightRadius = Math.min(lightRadiusKm / scale, 20);
     
-    console.log(`💥 NASA Shockwave Data:
+    console.log(`💥 NASA Shockwave Data (УЛУЧШЕННАЯ):
     - Energy: ${megatons.toFixed(2)} MT (${kilotons.toFixed(0)} KT)
     - Fireball: ${fireballRadiusKm.toFixed(1)} km (${fireballRadius.toFixed(2)} units)
-    - Severe damage (20 psi): ${severeRadiusKm.toFixed(1)} km
-    - Moderate damage (5 psi): ${moderateRadiusKm.toFixed(1)} km
-    - Light damage (1 psi): ${moderateRadiusKm.toFixed(1)} km`);
+    - Severe (20 psi): ${severeRadiusKm.toFixed(1)} km (${severeRadius.toFixed(2)} units)
+    - Moderate (5 psi): ${moderateRadiusKm.toFixed(1)} km (${moderateRadius.toFixed(2)} units)
+    - Light (1 psi): ${lightRadiusKm.toFixed(1)} km (${lightRadius.toFixed(2)} units)`);
     
     // 1. ОГНЕННЫЙ ШАР (самый яркий, быстрый, УСИЛЕННЫЙ)
     createShockwaveRing(position, fireballRadius, {
-        color: 0xffff44,
-        speed: 0.25,
+        color: 0xffff77,
+        speed: 0.30,
         opacity: 1.0,
         label: 'Fireball',
         thickness: 0.15
@@ -161,6 +195,17 @@ function createRealisticShockwave(position, craterDiameter, megatons) {
             thickness: 0.1
         });
     }, 300);
+    
+    // 4. ЗОНА ЛЕГКИХ ПОВРЕЖДЕНИЙ (1 psi, НОВАЯ)
+    setTimeout(() => {
+        createShockwaveRing(position, lightRadius, {
+            color: 0xffaa44,
+            speed: 0.09,
+            opacity: 0.55,
+            label: 'Light damage (1 psi)',
+            thickness: 0.08
+        });
+    }, 600);
 }
 
 // Вспомогательная функция для создания волны

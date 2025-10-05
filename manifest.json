@@ -1,7 +1,7 @@
 {
-  "name": "METEOR MADNESS - NASA Space Apps",
+  "name": "☄️ METEOR MADNESS - NASA Space Apps 2025",
   "short_name": "Meteor Madness",
-  "description": "Interactive asteroid impact simulator for NASA Space Apps Challenge 2025",
+  "description": "Интерактивный симулятор столкновения астероидов - NASA Space Apps Challenge 2025",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -11,12 +11,24 @@
     {
       "src": "favicon.ico",
       "sizes": "any",
-      "type": "image/x-icon"
+      "type": "image/x-icon",
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "science", "simulation"],
-  "lang": "en-US",
+  "categories": ["education", "science", "simulation", "entertainment"],
+  "lang": "ru-RU",
   "dir": "ltr",
   "scope": "/",
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Открыть симулятор",
+      "short_name": "Симулятор",
+      "description": "Запустить симулятор астероида",
+      "url": "/",
+      "icons": []
+    }
+  ]
 }

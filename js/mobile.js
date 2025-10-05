@@ -1,28 +1,47 @@
-// Мобильная адаптация и touch события
+// ===================================
+// МОБИЛЬНАЯ АДАПТАЦИЯ - Enhanced Version
+// Touch события и оптимизация для мобильных устройств
+// ===================================
 
 // Определение мобильного устройства
 function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
 }
 
 // Определение размера экрана
 function getScreenSize() {
     const width = window.innerWidth;
-    if (width < 480) return 'xs';
-    if (width < 768) return 'sm';
-    if (width < 1024) return 'md';
-    return 'lg';
+    if (width < 360) return 'xxs'; // Very small phones
+    if (width < 480) return 'xs';  // Small phones
+    if (width < 768) return 'sm';  // Large phones
+    if (width < 1024) return 'md'; // Tablets
+    return 'lg'; // Desktop
+}
+
+// Определение типа устройства
+function getDeviceType() {
+    const ua = navigator.userAgent;
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+        return 'tablet';
+    }
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+        return 'mobile';
+    }
+    return 'desktop';
 }
 
 // Инициализация мобильных функций
 function initMobile() {
     const isMobile = isMobileDevice();
+    const deviceType = getDeviceType();
     const screenSize = getScreenSize();
+    const isLandscape = window.innerWidth > window.innerHeight;
     
-    console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'}, Screen: ${screenSize}`);
+    console.log(`📱 Device: ${deviceType} (${isMobile ? 'Mobile' : 'Desktop'}), Screen: ${screenSize}, Orientation: ${isLandscape ? 'Landscape' : 'Portrait'}`);
     
     if (isMobile) {
-        document.body.classList.add('mobile-device');
+        document.body.classList.add('mobile-device', `device-${deviceType}`, `screen-${screenSize}`);
         
         // Настройка сворачивающейся панели
         setupPanelToggle();
@@ -38,20 +57,33 @@ function initMobile() {
         }, false);
         
         // Предотвращаем pull-to-refresh на мобильных
+        let startY = 0;
+        document.body.addEventListener('touchstart', function(e) {
+            startY = e.touches[0].pageY;
+        }, { passive: true });
+        
         document.body.addEventListener('touchmove', function(e) {
-            if (e.target.closest('#canvas-container')) {
-                // Разрешаем прокрутку внутри canvas для управления камерой
+            const y = e.touches[0].pageY;
+            // Разрешаем скролл только внутри панели
+            if (e.target.closest('#left-panel')) {
                 return;
             }
-        }, { passive: true });
+            // Предотвращаем pull-to-refresh
+            if (y > startY && window.pageYOffset === 0) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         
         // Оптимизация производительности для мобильных
         optimizeForMobile();
+        
+        // Показываем подсказку при первой загрузке
+        showWelcomeHint();
     }
     
     // Адаптация при изменении ориентации
     window.addEventListener('orientationchange', handleOrientationChange);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', debounce(handleResize, 250));
 }
 
 // Настройка сворачивающейся панели для мобильных
@@ -70,9 +102,8 @@ function setupPanelToggle() {
     const isMobile = isMobileDevice();
     const isLandscape = window.innerWidth > window.innerHeight;
     
-    if (isMobile && !isLandscape) {
-        uiContainer.classList.remove('expanded');
-    } else if (isMobile && isLandscape) {
+    if (isMobile) {
+        // На мобильных всегда начинаем свёрнутыми
         uiContainer.classList.remove('expanded');
     }
     
@@ -82,18 +113,23 @@ function setupPanelToggle() {
         
         if (isExpanded) {
             panelToggle.setAttribute('aria-label', 'Свайп вниз для закрытия');
-            vibrate(20);
+            vibrate(15);
             console.log('📖 Panel expanded');
+            
+            // Прокручиваем панель наверх при открытии
+            const leftPanel = document.getElementById('left-panel');
+            if (leftPanel) {
+                leftPanel.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         } else {
             panelToggle.setAttribute('aria-label', 'Свайп вверх для панели управления');
             vibrate(10);
             console.log('📕 Panel collapsed');
         }
         
+        // Обновляем размеры canvas и карт после анимации
         setTimeout(() => {
-            if (window.camera && window.renderer) {
-                handleResize();
-            }
+            handleResize();
         }, 350);
     }
     
@@ -104,42 +140,62 @@ function setupPanelToggle() {
         togglePanel();
     });
     
-    // NASA Eyes Style - Свайп жесты
+    // NASA Eyes Style - Улучшенные свайп жесты
     let touchStartY = 0;
     let touchEndY = 0;
+    let touchStartX = 0;
     let isDragging = false;
+    const SWIPE_THRESHOLD = 50; // Минимальная дистанция свайпа
     
     uiContainer.addEventListener('touchstart', function(e) {
         touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
         isDragging = true;
     }, { passive: true });
     
     uiContainer.addEventListener('touchmove', function(e) {
         if (!isDragging) return;
         touchEndY = e.touches[0].clientY;
+        
+        // Визуальная обратная связь при свайпе
+        const diff = touchStartY - touchEndY;
+        if (Math.abs(diff) > 10 && !uiContainer.classList.contains('expanded')) {
+            uiContainer.style.transform = `translateY(calc(100% - ${Math.max(0, -diff)}px))`;
+        }
     }, { passive: true });
     
     uiContainer.addEventListener('touchend', function(e) {
         if (!isDragging) return;
         isDragging = false;
         
-        const swipeDistance = touchStartY - touchEndY;
+        // Сбрасываем трансформ
+        uiContainer.style.transform = '';
         
-        // Свайп вверх (открыть) - минимум 40px
-        if (swipeDistance > 40) {
+        const swipeDistance = touchStartY - touchEndY;
+        const horizontalDistance = Math.abs(e.changedTouches[0].clientX - touchStartX);
+        
+        // Игнорируем, если слишком много горизонтального движения
+        if (horizontalDistance > 30) return;
+        
+        // Свайп вверх (открыть)
+        if (swipeDistance > SWIPE_THRESHOLD) {
             if (!uiContainer.classList.contains('expanded')) {
                 togglePanel();
             }
         }
-        // Свайп вниз (закрыть) - минимум 40px
-        else if (swipeDistance < -40) {
+        // Свайп вниз (закрыть)
+        else if (swipeDistance < -SWIPE_THRESHOLD) {
             if (uiContainer.classList.contains('expanded')) {
-                togglePanel();
+                // Проверяем, что панель прокручена наверх
+                const leftPanel = document.getElementById('left-panel');
+                if (leftPanel && leftPanel.scrollTop < 10) {
+                    togglePanel();
+                }
             }
         }
     }, { passive: true });
     
-    // Закрываем панель при клике на канвас (только portrait mobile)
+    // Закрываем панель при клике на canvas (только portrait mobile)
     const canvasContainer = document.getElementById('canvas-container');
     if (canvasContainer && isMobile) {
         let tapTimeout = null;
@@ -155,7 +211,8 @@ function setupPanelToggle() {
                 tapTimeout = setTimeout(() => {
                     uiContainer.classList.remove('expanded');
                     panelToggle.setAttribute('aria-label', 'Развернуть панель');
-                    console.log('📕 Panel auto-collapsed');
+                    vibrate(10);
+                    console.log('📕 Panel auto-collapsed (tap on canvas)');
                 }, 100);
             }
         });
@@ -168,28 +225,48 @@ function setupPanelToggle() {
 function optimizeForMobile() {
     console.log('⚡ Optimizing for mobile...');
     
+    const screenSize = getScreenSize();
+    const deviceType = getDeviceType();
+    
     // Уменьшаем качество рендеринга на слабых устройствах
     if (renderer) {
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        console.log('  • Pixel ratio set to:', renderer.getPixelRatio());
+        const pixelRatio = deviceType === 'mobile' && screenSize === 'xxs' ? 1 : Math.min(window.devicePixelRatio, 2);
+        renderer.setPixelRatio(pixelRatio);
+        console.log('  • Pixel ratio set to:', pixelRatio);
     }
     
     // Уменьшаем количество частиц для мобильных
-    window.MOBILE_PARTICLE_REDUCTION = 0.5; // 50% от обычного количества
+    if (screenSize === 'xxs' || screenSize === 'xs') {
+        window.MOBILE_PARTICLE_REDUCTION = 0.3; // 30% от обычного
+    } else if (screenSize === 'sm') {
+        window.MOBILE_PARTICLE_REDUCTION = 0.5; // 50% от обычного
+    } else {
+        window.MOBILE_PARTICLE_REDUCTION = 0.7; // 70% от обычного
+    }
+    console.log('  • Particle reduction:', window.MOBILE_PARTICLE_REDUCTION);
     
     // Отключаем тени на слабых устройствах
-    const isMidRange = getScreenSize() === 'xs' || getScreenSize() === 'sm';
-    if (isMidRange && renderer) {
+    const isLowEnd = screenSize === 'xxs' || screenSize === 'xs';
+    if (isLowEnd && renderer) {
         renderer.shadowMap.enabled = false;
         console.log('  • Shadows disabled for performance');
     }
+    
+    // Оптимизация антиалиасинга
+    if (renderer && isLowEnd) {
+        renderer.antialias = false;
+        console.log('  • Antialiasing disabled for performance');
+    }
+    
+    console.log('✅ Mobile optimization complete');
 }
 
 // Обработка изменения ориентации
 function handleOrientationChange() {
     setTimeout(() => {
         const orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
-        console.log(`🔄 Orientation changed to: ${orientation}`);
+        const screenSize = getScreenSize();
+        console.log(`🔄 Orientation changed to: ${orientation} (${screenSize})`);
         
         // Обновляем размеры через handleResize
         handleResize();
@@ -198,15 +275,17 @@ function handleOrientationChange() {
         const uiContainer = document.getElementById('ui-container');
         const panelToggle = document.getElementById('panel-toggle');
         
-        if (uiContainer && panelToggle) {
-            if (orientation === 'landscape' && isMobileDevice()) {
-                // В landscape можно оставить развернутой или свернуть
-                // uiContainer.classList.add('expanded');
+        if (uiContainer && panelToggle && isMobileDevice()) {
+            // В landscape на маленьких экранах лучше закрыть панель
+            if (orientation === 'landscape' && screenSize !== 'md' && screenSize !== 'lg') {
+                uiContainer.classList.remove('expanded');
             }
         }
         
         // Показываем подсказку по ориентации
-        showOrientationHint();
+        if (screenSize === 'xxs' || screenSize === 'xs' || screenSize === 'sm') {
+            showOrientationHint(orientation);
+        }
     }, 300);
 }
 
@@ -241,43 +320,49 @@ function handleResize() {
 }
 
 // Подсказка по ориентации экрана
-function showOrientationHint() {
-    const orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+function showOrientationHint(orientation) {
     const screenSize = getScreenSize();
     
-    if (screenSize === 'xs' || screenSize === 'sm') {
+    if (screenSize === 'xxs' || screenSize === 'xs' || screenSize === 'sm') {
+        // Удаляем старую подсказку
+        const oldHint = document.getElementById('orientation-hint');
+        if (oldHint) oldHint.remove();
+        
         const hint = document.createElement('div');
         hint.id = 'orientation-hint';
         hint.style.cssText = `
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 107, 53, 0.95);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95));
             color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
             z-index: 10000;
-            animation: fadeInOut 3s ease;
+            animation: fadeInOut 3.5s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            max-width: 80%;
+            text-align: center;
         `;
         
         if (orientation === 'portrait') {
-            hint.textContent = '💡 Поверните устройство для лучшего просмотра';
+            hint.innerHTML = '� Поверните устройство горизонтально<br>для лучшего просмотра';
         } else {
-            hint.textContent = '✓ Ландшафтный режим оптимален';
+            hint.innerHTML = '✓ Ландшафтный режим - оптимально!';
         }
-        
-        // Удаляем предыдущую подсказку
-        const oldHint = document.getElementById('orientation-hint');
-        if (oldHint) oldHint.remove();
         
         document.body.appendChild(hint);
         
         setTimeout(() => {
             hint.style.opacity = '0';
+            hint.style.transform = 'translateX(-50%) translateY(-20px)';
             setTimeout(() => hint.remove(), 1000);
-        }, 2000);
+        }, 2500);
     }
 }
 
@@ -307,19 +392,33 @@ document.head.appendChild(style);
 // Touch-friendly controls для OrbitControls
 function enhanceTouchControls() {
     if (controls && isMobileDevice()) {
+        const screenSize = getScreenSize();
+        
         // Настраиваем для touch
         controls.enableDamping = true;
-        controls.dampingFactor = 0.1;
-        controls.rotateSpeed = 0.5;
-        controls.zoomSpeed = 1.2;
-        controls.panSpeed = 0.8;
+        controls.dampingFactor = 0.08;
+        
+        // Адаптивная скорость в зависимости от размера экрана
+        if (screenSize === 'xxs' || screenSize === 'xs') {
+            controls.rotateSpeed = 0.4;
+            controls.zoomSpeed = 1.0;
+            controls.panSpeed = 0.6;
+        } else {
+            controls.rotateSpeed = 0.5;
+            controls.zoomSpeed = 1.2;
+            controls.panSpeed = 0.8;
+        }
         
         // Ограничения для более удобного управления на мобильных
-        controls.minDistance = 20;
-        controls.maxDistance = 80;
+        controls.minDistance = 15;
+        controls.maxDistance = 100;
         controls.enablePan = false; // Отключаем pan на мобильных для упрощения
         
-        console.log('✅ Touch controls enhanced');
+        // Ограничение вертикального вращения
+        controls.minPolarAngle = Math.PI / 6; // 30 градусов от верха
+        controls.maxPolarAngle = Math.PI * 0.75; // 135 градусов
+        
+        console.log('✅ Touch controls enhanced for', screenSize);
     }
 }
 
@@ -327,27 +426,30 @@ function enhanceTouchControls() {
 function enhanceMobileUI() {
     const screenSize = getScreenSize();
     
-    if (screenSize === 'xs' || screenSize === 'sm') {
+    if (screenSize === 'xxs' || screenSize === 'xs' || screenSize === 'sm') {
         // Добавляем кнопку "наверх" для длинных панелей
         const backToTop = document.createElement('button');
         backToTop.id = 'back-to-top';
         backToTop.innerHTML = '↑';
         backToTop.style.cssText = `
             position: fixed;
-            bottom: 20px;
+            bottom: 90px;
             right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: linear-gradient(135deg, #ff6b35, #ff8c42);
-            border: none;
+            width: 54px;
+            height: 54px;
+            border-radius: 27px;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95));
+            border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
-            font-size: 24px;
+            font-size: 26px;
+            font-weight: bold;
             cursor: pointer;
             z-index: 1000;
             display: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
             touch-action: manipulation;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         `;
         
         document.body.appendChild(backToTop);
@@ -356,8 +458,11 @@ function enhanceMobileUI() {
         const leftPanel = document.getElementById('left-panel');
         if (leftPanel) {
             leftPanel.addEventListener('scroll', () => {
-                if (leftPanel.scrollTop > 200) {
-                    backToTop.style.display = 'block';
+                const uiContainer = document.getElementById('ui-container');
+                if (leftPanel.scrollTop > 150 && uiContainer.classList.contains('expanded')) {
+                    backToTop.style.display = 'flex';
+                    backToTop.style.alignItems = 'center';
+                    backToTop.style.justifyContent = 'center';
                 } else {
                     backToTop.style.display = 'none';
                 }
@@ -365,15 +470,22 @@ function enhanceMobileUI() {
             
             backToTop.addEventListener('click', () => {
                 leftPanel.scrollTo({ top: 0, behavior: 'smooth' });
+                vibrate(15);
             });
         }
     }
+    
+    console.log('✅ Mobile UI enhancements applied');
 }
 
 // Виброотклик для мобильных (если поддерживается)
-function vibrate(pattern = 10) {
-    if ('vibrate' in navigator) {
-        navigator.vibrate(pattern);
+function vibrate(duration = 10) {
+    if ('vibrate' in navigator && isMobileDevice()) {
+        try {
+            navigator.vibrate(duration);
+        } catch (e) {
+            // Игнорируем ошибки вибрации
+        }
     }
 }
 
@@ -381,18 +493,11 @@ function vibrate(pattern = 10) {
 function addVibrationFeedback() {
     if (!isMobileDevice()) return;
     
-    // При выборе астероида
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.asteroid-card')) {
-            vibrate(10);
-        }
-    });
-    
     // При запуске симуляции
     const startBtn = document.getElementById('start-simulation');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
-            vibrate([30, 50, 30]);
+            vibrate([25, 40, 25]); // Паттерн вибрации
         });
     }
     
@@ -403,10 +508,83 @@ function addVibrationFeedback() {
             vibrate(20);
         });
     }
+    
+    // При выборе астероида
+    const asteroidSelect = document.getElementById('asteroid-select');
+    if (asteroidSelect) {
+        asteroidSelect.addEventListener('change', () => {
+            vibrate(12);
+        });
+    }
+    
+    // При установке координат
+    const setCoordBtn = document.getElementById('set-coordinates');
+    if (setCoordBtn) {
+        setCoordBtn.addEventListener('click', () => {
+            vibrate(15);
+        });
+    }
+    
+    console.log('✅ Vibration feedback configured');
+}
+
+// Debounce функция для оптимизации
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Приветственная подсказка при первой загрузке
+function showWelcomeHint() {
+    // Проверяем, показывали ли уже подсказку
+    if (localStorage.getItem('welcomeShown')) return;
+    
+    setTimeout(() => {
+        const hint = document.createElement('div');
+        hint.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95));
+            color: white;
+            padding: 16px 28px;
+            border-radius: 28px;
+            font-size: 15px;
+            font-weight: 600;
+            z-index: 10001;
+            animation: fadeInOut 4s ease;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            max-width: 85%;
+            text-align: center;
+            line-height: 1.4;
+        `;
+        
+        hint.innerHTML = '👆 Нажмите на стрелку внизу<br>для открытия панели управления';
+        document.body.appendChild(hint);
+        
+        setTimeout(() => {
+            hint.style.opacity = '0';
+            hint.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => hint.remove(), 1000);
+        }, 3000);
+        
+        localStorage.setItem('welcomeShown', 'true');
+    }, 1500);
 }
 
 // Инициализация при загрузке
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Initializing mobile adaptations...');
     initMobile();
     
     // Ждем инициализации Three.js компонентов
@@ -414,10 +592,15 @@ window.addEventListener('DOMContentLoaded', () => {
         enhanceTouchControls();
         enhanceMobileUI();
         addVibrationFeedback();
+        console.log('✅ All mobile features initialized');
     }, 1000);
 });
 
-// Экспорт функций
+// Экспорт функций для использования в других модулях
 window.isMobileDevice = isMobileDevice;
 window.getScreenSize = getScreenSize;
+window.getDeviceType = getDeviceType;
 window.vibrate = vibrate;
+window.handleResize = handleResize;
+
+console.log('📱 Mobile module loaded successfully');

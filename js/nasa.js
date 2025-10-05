@@ -79,13 +79,30 @@ function selectAsteroid(a){
 }
 
 function createAsteroidModel(diameter){
-    const size=Math.max(diameter/1000,0.2);
+    // ПРАВИЛЬНОЕ МАСШТАБИРОВАНИЕ относительно Земли
+    // Земля имеет радиус 15 единиц и диаметр ~12,742 км
+    // Формула: размер_астероида = (диаметр_м / диаметр_Земли_м) * радиус_Земли_единиц
+    const earthDiameterMeters = 12742000; // 12,742 км в метрах
+    const earthRadiusUnits = 15; // радиус Земли в единицах сцены
+    
+    // Правильный масштаб: астероид к Земле
+    const asteroidSize = (diameter / earthDiameterMeters) * earthRadiusUnits * 2; // *2 т.к. diameter vs radius
+    
+    // Минимальный размер для видимости (но пропорциональный!)
+    const size = Math.max(asteroidSize, 0.15); // минимум 0.15 для видимости
+    
+    console.log(`🪨 Asteroid size: ${diameter}m → ${size.toFixed(4)} units (Earth radius: ${earthRadiusUnits})`);
+    
     const geometry=new THREE.SphereGeometry(size,32,32);
     const textures=['textures/asteroid_1.jpg','textures/asteroid_2.jpg','textures/asteroid_3.jpg','textures/moon.jpg'];
     const tex=textures[Math.floor(Math.random()*textures.length)];
     const texture=new THREE.TextureLoader().load(tex,()=>console.log('🪨 Texture:',tex));
     const material=new THREE.MeshPhongMaterial({map:texture,bumpMap:texture,bumpScale:0.04,shininess:4});
-    const mesh=new THREE.Mesh(geometry,material); mesh.rotation.x=Math.random()*Math.PI; mesh.rotation.y=Math.random()*Math.PI; return mesh; }
+    const mesh=new THREE.Mesh(geometry,material); 
+    mesh.rotation.x=Math.random()*Math.PI; 
+    mesh.rotation.y=Math.random()*Math.PI; 
+    return mesh;
+}
 
 async function addImpactor2025(){
     const exists=allAsteroids.find(a=>a.name&&a.name.includes('IMPACTOR-2025')); if(exists) return;

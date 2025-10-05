@@ -1,23 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <meta name="description" content="Interactive asteroid impact simulator - NASA Space Apps Challenge 2025">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ff6b35">
+    <meta name="description" content="Интерактивный симулятор столкновения астероидов - NASA Space Apps Challenge 2025">
+    <meta name="keywords" content="asteroid, meteor, NASA, space, simulation, астероид, метеор, космос, симуляция">
     <link rel="manifest" href="manifest.json">
-    <title>METEOR MADNESS - NASA Space Apps Challenge 2025</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title> METEOR MADNESS - NASA Space Apps 2025</title>
     <!-- Desktop CSS -->
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=24">
     <!-- Mobile CSS (separate file) -->
-    <link rel="stylesheet" href="mobile.css?v=23">
+    <link rel="stylesheet" href="mobile.css?v=24">
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="libs/leaflet/leaflet.css" />
 </head>
 <body>
     <div id="loading-screen">
+        <img src="logo.svg" alt="Meteor Madness Logo" class="loading-logo">
         <div class="loader"></div>
         <p>Loading NASA NeoWs API data...</p>
     </div>
@@ -30,6 +34,7 @@
         
         <div id="left-panel" class="panel">
             <div class="header">
+                <img src="logo.svg" alt="Logo" class="header-logo">
                 <h1>☄️ METEOR MADNESS</h1>
                 <p style="font-size: 12px; color: #ff6b35; margin-top: 5px;">🏆 NASA Space Apps Challenge 2025</p>
             </div>
@@ -230,15 +235,15 @@
     
         
     <!-- Modules - versioned to prevent caching -->
-    <script src="js/mobile.js?v=46"></script>
-    <script src="js/config.js?v=46"></script>
-    <script src="js/scene.js?v=46"></script>
-    <script src="js/particles.js?v=46"></script>
-    <script src="js/explosion.js?v=46"></script>
-    <script src="js/nasa.js?v=46"></script>
-    <script src="js/controls.js?v=46"></script>
-    <script src="js/simulation.js?v=46"></script>
-    <script src="js/init.js?v=46"></script>
+    <script src="js/mobile.js?v=47"></script>
+    <script src="js/config.js?v=47"></script>
+    <script src="js/scene.js?v=47"></script>
+    <script src="js/particles.js?v=47"></script>
+    <script src="js/explosion.js?v=47"></script>
+    <script src="js/nasa.js?v=47"></script>
+    <script src="js/controls.js?v=47"></script>
+    <script src="js/simulation.js?v=47"></script>
+    <script src="js/init.js?v=47"></script>
 
 </body>
 </html>
