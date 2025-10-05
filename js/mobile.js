@@ -24,6 +24,9 @@ function initMobile() {
     if (isMobile) {
         document.body.classList.add('mobile-device');
         
+        // Настройка сворачивающейся панели
+        setupPanelToggle();
+        
         // Предотвращаем двойное нажатие для zoom на iOS
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function(event) {
@@ -49,6 +52,51 @@ function initMobile() {
     // Адаптация при изменении ориентации
     window.addEventListener('orientationchange', handleOrientationChange);
     window.addEventListener('resize', handleResize);
+}
+
+// Настройка сворачивающейся панели для мобильных
+function setupPanelToggle() {
+    const panelToggle = document.getElementById('panel-toggle');
+    const uiContainer = document.getElementById('ui-container');
+    
+    if (!panelToggle || !uiContainer) return;
+    
+    // Начинаем со свернутой панели
+    uiContainer.classList.remove('expanded');
+    
+    panelToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        uiContainer.classList.toggle('expanded');
+        
+        // Обновляем aria-label для доступности
+        if (uiContainer.classList.contains('expanded')) {
+            panelToggle.setAttribute('aria-label', 'Свернуть панель');
+            vibrate(30);
+        } else {
+            panelToggle.setAttribute('aria-label', 'Развернуть панель');
+            vibrate(20);
+        }
+        
+        // Обновляем размер канваса после анимации
+        setTimeout(() => {
+            if (window.camera && window.renderer) {
+                handleResize();
+            }
+        }, 400);
+    });
+    
+    // Закрываем панель при клике на канвас
+    const canvasContainer = document.getElementById('canvas-container');
+    if (canvasContainer) {
+        canvasContainer.addEventListener('click', function() {
+            if (uiContainer.classList.contains('expanded')) {
+                uiContainer.classList.remove('expanded');
+                panelToggle.setAttribute('aria-label', 'Развернуть панель');
+            }
+        });
+    }
 }
 
 // Оптимизация для мобильных устройств
