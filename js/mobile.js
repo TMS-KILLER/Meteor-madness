@@ -76,31 +76,68 @@ function setupPanelToggle() {
         uiContainer.classList.remove('expanded');
     }
     
-    // Обработчик клика на кнопку
-    panelToggle.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
+    // Функция переключения панели
+    function togglePanel() {
         const isExpanded = uiContainer.classList.toggle('expanded');
         
-        // Обновляем aria-label для доступности
         if (isExpanded) {
-            panelToggle.setAttribute('aria-label', 'Свернуть панель');
-            vibrate(30);
+            panelToggle.setAttribute('aria-label', 'Свайп вниз для закрытия');
+            vibrate(20);
             console.log('📖 Panel expanded');
         } else {
-            panelToggle.setAttribute('aria-label', 'Развернуть панель');
-            vibrate(20);
+            panelToggle.setAttribute('aria-label', 'Свайп вверх для панели управления');
+            vibrate(10);
             console.log('📕 Panel collapsed');
         }
         
-        // Обновляем размер канваса после анимации
         setTimeout(() => {
             if (window.camera && window.renderer) {
                 handleResize();
             }
-        }, 400);
+        }, 350);
+    }
+    
+    // Обработчик клика на индикатор
+    panelToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePanel();
     });
+    
+    // NASA Eyes Style - Свайп жесты
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let isDragging = false;
+    
+    uiContainer.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].clientY;
+        isDragging = true;
+    }, { passive: true });
+    
+    uiContainer.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        touchEndY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    uiContainer.addEventListener('touchend', function(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        const swipeDistance = touchStartY - touchEndY;
+        
+        // Свайп вверх (открыть) - минимум 40px
+        if (swipeDistance > 40) {
+            if (!uiContainer.classList.contains('expanded')) {
+                togglePanel();
+            }
+        }
+        // Свайп вниз (закрыть) - минимум 40px
+        else if (swipeDistance < -40) {
+            if (uiContainer.classList.contains('expanded')) {
+                togglePanel();
+            }
+        }
+    }, { passive: true });
     
     // Закрываем панель при клике на канвас (только portrait mobile)
     const canvasContainer = document.getElementById('canvas-container');
