@@ -799,9 +799,26 @@ function animateImpact() {
             console.log(`📍 Original coordinates: ${impactLocation.lat.toFixed(6)}°, ${impactLocation.lng.toFixed(6)}°`);
             console.log(`📍 3D impact position: X=${finalEndPos.x.toFixed(3)}, Y=${finalEndPos.y.toFixed(3)}, Z=${finalEndPos.z.toFixed(3)}`);
             
+            // ПЕРЕСЧИТЫВАЕМ координаты из финальной 3D позиции с учётом вращения Земли
+            const finalLat = Math.asin(finalEndPos.y / earthRadius) * (180 / Math.PI);
+            const finalLng = -Math.atan2(finalEndPos.z, finalEndPos.x) * (180 / Math.PI);
+            
+            console.log(`📍 Final impact coordinates (with Earth rotation): ${finalLat.toFixed(6)}°, ${finalLng.toFixed(6)}°`);
+            
+            // ОБНОВЛЯЕМ impactLocation на финальные координаты для точного кратера
+            const originalLat = impactLocation.lat;
+            const originalLng = impactLocation.lng;
+            impactLocation.lat = finalLat;
+            impactLocation.lng = finalLng;
+            
             // Взрыв при ударе - передаём финальную позицию
-            // createRealisticExplosion использует impactLocation.lat/lng для кратера!
+            // createRealisticExplosion теперь использует ОБНОВЛЁННЫЕ impactLocation координаты!
             createRealisticExplosion(finalEndPos, craterDiameter, kineticEnergy, velocity, diameter);
+            
+            // Восстанавливаем оригинальные координаты для маркера
+            impactLocation.lat = originalLat;
+            impactLocation.lng = originalLng;
+            
             scene.remove(asteroid);
             asteroid = null;
             
@@ -902,6 +919,11 @@ function animateImpact() {
             } else {
                 console.warn('⚠️ Coordinate mismatch detected!');
             }
+            
+            // РАЗБЛОКИРОВАТЬ КНОПКУ для повторного запуска
+            isSimulationRunning = false;
+            document.getElementById('start-simulation').disabled = false;
+            console.log('✅ Simulation complete - button enabled for restart');
         }
     }
 
@@ -942,32 +964,29 @@ function resetSimulation() {
     explosionParticles.forEach(p => scene.remove(p.mesh));
     explosionParticles = [];
 
-    selectedAsteroid = null;
-    impactLocation = { lat: 0, lng: 0 };
+    // НЕ сбрасываем selectedAsteroid и impactLocation - они уже выбраны!
+    // selectedAsteroid = null;
+    // impactLocation = { lat: 0, lng: 0 };
 
-    document.getElementById('asteroid-info').style.display = 'none';
     document.getElementById('impact-info').style.display = 'none';
     document.getElementById('realtime-data').style.display = 'none';
     document.getElementById('impact-consequences').style.display = 'none';
     document.getElementById('historical-comparison').style.display = 'none';
     document.getElementById('planetary-defense').style.display = 'none';
-    document.getElementById('lat').textContent = '0°';
-    document.getElementById('lng').textContent = '0°';
-    document.getElementById('lat-input').value = '0';
-    document.getElementById('lng-input').value = '0';
-    document.getElementById('start-simulation').disabled = true;
-
-    // Сбросить маркер на карте
-    if (mapMarker) {
-        mapMarker.remove();
-        mapMarker = null;
-    }
     
-    // Удалить маркер с полноэкранной карты
-    if (window.mapMarkerFullscreen) {
-        window.mapMarkerFullscreen.remove();
-        window.mapMarkerFullscreen = null;
+    // Если астероид и локация выбраны - РАЗБЛОКИРОВАТЬ кнопку!
+    if (selectedAsteroid && impactLocation && impactLocation.lat !== undefined) {
+        document.getElementById('start-simulation').disabled = false;
+        console.log('✅ Simulation ready to restart with same asteroid and location');
+    } else {
+        document.getElementById('start-simulation').disabled = true;
     }
+
+    // Сбросить маркер на карте - НЕ УДАЛЯЕМ, оставляем на месте
+    // if (mapMarker) {
+    //     mapMarker.remove();
+    //     mapMarker = null;
+    // }
     
     // УДАЛИТЬ ВСЕ КРАТЕРЫ С КАРТЫ
     if (window.craterMarkers && window.craterMarkers.length > 0) {
@@ -980,7 +999,10 @@ function resetSimulation() {
         console.log('🗑️ Crater markers removed from maps');
     }
 
-    document.querySelectorAll('.asteroid-card').forEach(card => {
-        card.classList.remove('selected');
-    });
+    // НЕ сбрасываем выбор астероида в списке
+    // document.querySelectorAll('.asteroid-card').forEach(card => {
+    //     card.classList.remove('selected');
+    // });
+    
+    console.log('🔄 Simulation reset complete - ready to run again!');
 }

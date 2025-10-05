@@ -217,42 +217,158 @@ function toggleVisualization() {
     }
 }
 
-// Add crater marker to map after impact
+// Add crater marker to map after impact - УЛУЧШЕННАЯ ВЕРСИЯ С ЗОНАМИ ПОРАЖЕНИЯ
 function addCraterToMap(lat, lng, craterDiameterKm) {
     if (!window.mapInitialized) return;
     
-    console.log(`🗺️ Adding crater to maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`🗺️ Adding ENHANCED crater with damage zones to maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
     
-    // Create a circle to show crater on small map
-    const craterCircle = L.circle([lat, lng], {
-        color: '#ff0000',
-        fillColor: '#8b0000',
-        fillOpacity: 0.5,
-        radius: (craterDiameterKm / 2) * 1000, // Convert km to meters for Leaflet
+    // Вычисляем энергию для расчета зон поражения
+    const megatons = window.impactCalculations ? window.impactCalculations.megatons : 1;
+    const kilotons = megatons * 1000;
+    
+    // NASA формулы для зон поражения
+    const fireballRadiusKm = 0.28 * Math.pow(kilotons, 0.33);
+    const severeRadiusKm = 0.54 * Math.pow(kilotons, 0.33);
+    const moderateRadiusKm = 1.28 * Math.pow(kilotons, 0.33);
+    const lightRadiusKm = 2.5 * Math.pow(kilotons, 0.33);
+    const seismicRadiusKm = 4.5 * Math.pow(kilotons, 0.33);
+    
+    console.log(`📊 Damage zones (NASA):
+    - Fireball: ${fireballRadiusKm.toFixed(2)} km
+    - Severe (20 psi): ${severeRadiusKm.toFixed(2)} km
+    - Moderate (5 psi): ${moderateRadiusKm.toFixed(2)} km
+    - Light (1 psi): ${lightRadiusKm.toFixed(2)} km
+    - Seismic: ${seismicRadiusKm.toFixed(2)} km`);
+    
+    // === МАЛЕНЬКАЯ КАРТА ===
+    
+    // 5. Сейсмическая зона (самая внешняя)
+    const seismicCircle = L.circle([lat, lng], {
+        color: '#ddaa66',
+        fillColor: '#ddaa66',
+        fillOpacity: 0.15,
+        radius: seismicRadiusKm * 1000,
         weight: 2
     }).addTo(window.map);
+    seismicCircle.bindPopup(`<b>🌊 Сейсмическая зона</b><br>Радиус: ${seismicRadiusKm.toFixed(2)} км<br>Землетрясения и цунами`);
     
-    craterCircle.bindPopup(`<b>🕳️ Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    // 4. Зона легких повреждений (1 psi)
+    const lightCircle = L.circle([lat, lng], {
+        color: '#ffaa33',
+        fillColor: '#ffaa33',
+        fillOpacity: 0.25,
+        radius: lightRadiusKm * 1000,
+        weight: 2
+    }).addTo(window.map);
+    lightCircle.bindPopup(`<b>⚠️ Легкие повреждения (1 psi)</b><br>Радиус: ${lightRadiusKm.toFixed(2)} км<br>Разбитые окна, легкие травмы`);
     
-    // Add to fullscreen map too
-    const craterCircleFullscreen = L.circle([lat, lng], {
-        color: '#ff0000',
-        fillColor: '#8b0000',
-        fillOpacity: 0.5,
+    // 3. Зона умеренных разрушений (5 psi)
+    const moderateCircle = L.circle([lat, lng], {
+        color: '#ff7700',
+        fillColor: '#ff7700',
+        fillOpacity: 0.35,
+        radius: moderateRadiusKm * 1000,
+        weight: 2
+    }).addTo(window.map);
+    moderateCircle.bindPopup(`<b>🏚️ Умеренные разрушения (5 psi)</b><br>Радиус: ${moderateRadiusKm.toFixed(2)} км<br>Разрушение зданий, серьезные травмы`);
+    
+    // 2. Зона сильных разрушений (20 psi)
+    const severeCircle = L.circle([lat, lng], {
+        color: '#ff4400',
+        fillColor: '#ff4400',
+        fillOpacity: 0.45,
+        radius: severeRadiusKm * 1000,
+        weight: 2
+    }).addTo(window.map);
+    severeCircle.bindPopup(`<b>� Сильные разрушения (20 psi)</b><br>Радиус: ${severeRadiusKm.toFixed(2)} км<br>Полное разрушение, крайне высокая летальность`);
+    
+    // 1. Огненный шар (центр)
+    const fireballCircle = L.circle([lat, lng], {
+        color: '#ffff00',
+        fillColor: '#ff0000',
+        fillOpacity: 0.6,
+        radius: fireballRadiusKm * 1000,
+        weight: 3
+    }).addTo(window.map);
+    fireballCircle.bindPopup(`<b>🔥 ОГНЕННЫЙ ШАР</b><br>Радиус: ${fireballRadiusKm.toFixed(2)} км<br>Испарение всего в зоне поражения`);
+    
+    // Кратер (самый центр)
+    const craterCircle = L.circle([lat, lng], {
+        color: '#000000',
+        fillColor: '#1a1a1a',
+        fillOpacity: 0.9,
         radius: (craterDiameterKm / 2) * 1000,
+        weight: 3
+    }).addTo(window.map);
+    craterCircle.bindPopup(`<b>🕳️ КРАТЕР</b><br>Диаметр: ${craterDiameterKm.toFixed(2)} км<br>Локация: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    
+    // === ПОЛНОЭКРАННАЯ КАРТА ===
+    
+    const seismicCircleFs = L.circle([lat, lng], {
+        color: '#ddaa66',
+        fillColor: '#ddaa66',
+        fillOpacity: 0.15,
+        radius: seismicRadiusKm * 1000,
         weight: 2
     }).addTo(window.mapFullscreen);
+    seismicCircleFs.bindPopup(`<b>🌊 Сейсмическая зона</b><br>Радиус: ${seismicRadiusKm.toFixed(2)} км`);
     
-    craterCircleFullscreen.bindPopup(`<b>🕳️ Impact Crater</b><br>Diameter: ${craterDiameterKm.toFixed(2)} km<br>Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    const lightCircleFs = L.circle([lat, lng], {
+        color: '#ffaa33',
+        fillColor: '#ffaa33',
+        fillOpacity: 0.25,
+        radius: lightRadiusKm * 1000,
+        weight: 2
+    }).addTo(window.mapFullscreen);
+    lightCircleFs.bindPopup(`<b>⚠️ Легкие повреждения</b><br>Радиус: ${lightRadiusKm.toFixed(2)} км`);
     
-    // Store BOTH crater circles globally so they persist
+    const moderateCircleFs = L.circle([lat, lng], {
+        color: '#ff7700',
+        fillColor: '#ff7700',
+        fillOpacity: 0.35,
+        radius: moderateRadiusKm * 1000,
+        weight: 2
+    }).addTo(window.mapFullscreen);
+    moderateCircleFs.bindPopup(`<b>🏚️ Умеренные разрушения</b><br>Радиус: ${moderateRadiusKm.toFixed(2)} км`);
+    
+    const severeCircleFs = L.circle([lat, lng], {
+        color: '#ff4400',
+        fillColor: '#ff4400',
+        fillOpacity: 0.45,
+        radius: severeRadiusKm * 1000,
+        weight: 2
+    }).addTo(window.mapFullscreen);
+    severeCircleFs.bindPopup(`<b>💀 Сильные разрушения</b><br>Радиус: ${severeRadiusKm.toFixed(2)} км`);
+    
+    const fireballCircleFs = L.circle([lat, lng], {
+        color: '#ffff00',
+        fillColor: '#ff0000',
+        fillOpacity: 0.6,
+        radius: fireballRadiusKm * 1000,
+        weight: 3
+    }).addTo(window.mapFullscreen);
+    fireballCircleFs.bindPopup(`<b>� ОГНЕННЫЙ ШАР</b><br>Радиус: ${fireballRadiusKm.toFixed(2)} км`);
+    
+    const craterCircleFs = L.circle([lat, lng], {
+        color: '#000000',
+        fillColor: '#1a1a1a',
+        fillOpacity: 0.9,
+        radius: (craterDiameterKm / 2) * 1000,
+        weight: 3
+    }).addTo(window.mapFullscreen);
+    craterCircleFs.bindPopup(`<b>🕳️ КРАТЕР</b><br>Диаметр: ${craterDiameterKm.toFixed(2)} км<br>Локация: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    
+    // Store ALL damage zone circles globally
     if (!window.craterMarkers) {
         window.craterMarkers = [];
     }
-    window.craterMarkers.push(craterCircle);
-    window.craterMarkers.push(craterCircleFullscreen);
+    window.craterMarkers.push(
+        seismicCircle, lightCircle, moderateCircle, severeCircle, fireballCircle, craterCircle,
+        seismicCircleFs, lightCircleFs, moderateCircleFs, severeCircleFs, fireballCircleFs, craterCircleFs
+    );
     
-    console.log(`✅ Crater added to BOTH maps: ${craterDiameterKm.toFixed(2)} km at ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+    console.log(`✅ Enhanced crater with ALL damage zones added to BOTH maps!`);
 }
 
 // Export for HTML event handlers
