@@ -1,0 +1,570 @@
+/* ===================================
+   MOBILE ADAPTATION CSS
+   NASA Eyes Style Design
+   =================================== */
+
+/* Tablet Portrait - 1024px and below */
+@media (max-width: 1024px) and (min-width: 769px) {
+    #ui-container {
+        width: 350px;
+    }
+    
+    #canvas-container {
+        left: 350px;
+        width: calc(100% - 350px);
+    }
+}
+
+/* Mobile & Tablet - 768px and below */
+@media (max-width: 768px) {
+    body {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100vh;
+        background: #000;
+    }
+    
+    /* NASA Eyes Style - Выдвижная панель снизу */
+    #ui-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60vh;
+        max-height: 60vh;
+        border: none;
+        background: linear-gradient(180deg, rgba(10, 15, 30, 0.98) 0%, rgba(0, 0, 0, 0.98) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transform: translateY(calc(60vh - 60px));
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8), 
+                    0 -2px 0 rgba(255, 107, 53, 0.3);
+    }
+    
+    #ui-container.expanded {
+        transform: translateY(0);
+        box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.9), 
+                    0 -3px 0 rgba(255, 107, 53, 0.5);
+    }
+    
+    /* NASA Eyes Style - Полупрозрачная панель */
+    #left-panel {
+        width: 100%;
+        height: 100%;
+        padding: 70px 20px 30px 20px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        background: transparent;
+    }
+    
+    .panel {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }
+    
+    /* Canvas на весь экран */
+    #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+    }
+    
+    /* Показываем кнопку toggle */
+    .panel-toggle {
+        display: block;
+    }
+    
+    /* Уменьшаем шрифты */
+    .header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+    }
+    
+    .header h1 {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+    }
+    
+    .header p {
+        font-size: 11px !important;
+        opacity: 0.8;
+    }
+    
+    h2 {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #fff;
+        opacity: 0.9;
+    }
+    
+    .section {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 107, 53, 0.15);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .section:last-child {
+        margin-bottom: 10px;
+    }
+    
+    /* NASA Eyes Style - Минималистичные кнопки */
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        font-size: 14px;
+        font-weight: 600;
+        padding: 14px 20px;
+        min-height: 48px;
+        border-radius: 10px;
+        border: none;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #ff6b35 0%, #ff4500 100%);
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    }
+    
+    .btn-primary:active {
+        transform: scale(0.97);
+        box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+    }
+    
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-visualization {
+        background: rgba(100, 149, 237, 0.2);
+        border: 1px solid rgba(100, 149, 237, 0.4);
+    }
+    
+    /* Карта меньше */
+    #map {
+        height: 180px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Инпуты в стиле NASA */
+    input[type="number"],
+    select {
+        font-size: 15px;
+        min-height: 48px;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 107, 53, 0.25);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    input[type="number"]:focus,
+    select:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #ff6b35;
+        box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        outline: none;
+    }
+    
+    label {
+        font-size: 11px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Координаты в столбик */
+    .coordinate-inputs {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .coordinate-inputs > div {
+        width: 100% !important;
+    }
+    
+    /* Fullscreen map */
+    .map-fullscreen-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        max-width: none;
+    }
+    
+    .map-fullscreen-header {
+        height: 50px;
+        padding: 0 15px;
+    }
+    
+    .map-fullscreen-title {
+        font-size: 16px;
+    }
+    
+    .map-fullscreen-content {
+        top: 50px;
+    }
+    
+    /* Детали */
+    .detail-row {
+        font-size: 13px;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    /* Скроллбар тоньше */
+    #left-panel::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    /* Инпуты для iOS */
+    input[type="number"],
+    select {
+        font-size: 16px; /* Предотвращает zoom на iOS */
+        min-height: 44px;
+    }
+    
+    /* NASA Eyes Style - Детали астероида */
+    #asteroid-details,
+    #impact-details,
+    #consequences-data,
+    #historical-data,
+    #defense-data,
+    #realtime-content {
+        padding: 12px !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-radius: 8px !important;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    
+    .detail-row {
+        font-size: 12px;
+        padding: 8px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .detail-label {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    
+    /* Select в стиле NASA */
+    #asteroid-select {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 107, 53, 0.25) !important;
+        border-radius: 10px !important;
+        padding: 14px 15px !important;
+        font-size: 14px !important;
+        backdrop-filter: blur(10px);
+        min-height: 48px;
+    }
+    
+    /* Кнопка расширения карты */
+    .map-expand-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 107, 53, 0.4);
+        border-radius: 8px;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .map-expand-btn:active {
+        background: rgba(255, 107, 53, 0.3);
+        transform: scale(0.95);
+    }
+    
+    /* Fullscreen Map в стиле NASA */
+    .map-fullscreen-container {
+        width: 100vw !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        max-width: none !important;
+        background: rgba(0, 0, 0, 0.98) !important;
+    }
+    
+    .map-fullscreen-header {
+        height: 60px !important;
+        padding: 0 20px !important;
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.9) 0%, rgba(255, 69, 0, 0.9) 100%) !important;
+        backdrop-filter: blur(20px);
+    }
+    
+    .map-fullscreen-title {
+        font-size: 16px !important;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    
+    .map-fullscreen-close {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 22px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 50% !important;
+    }
+    
+    .map-fullscreen-close:active {
+        background: rgba(255, 255, 255, 0.3) !important;
+        transform: scale(0.9) !important;
+    }
+    
+    .map-fullscreen-content {
+        top: 60px !important;
+    }
+    
+    /* Индикатор координат */
+    .instruction {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 12px;
+        font-weight: 500;
+    }
+    
+    /* Иконки эмодзи более четкие */
+    h2::before {
+        margin-right: 8px;
+    }
+    
+    /* NASA Eyes - Эффект загрузки */
+    #loading-screen {
+        background: linear-gradient(180deg, #000000 0%, #0a0f1e 100%);
+    }
+    
+    .loader {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 107, 53, 0.2);
+        border-top-color: #ff6b35;
+    }
+    
+    #loading-screen p {
+        font-size: 13px;
+        padding: 0 30px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Performance Optimizations */
+    #ui-container,
+    #canvas-container,
+    .panel-toggle {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
+    }
+    
+    /* Оптимизация анимаций */
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Small Mobile - 480px and below */
+@media (max-width: 480px) {
+    #ui-container {
+        height: 80vh;
+        transform: translateY(calc(80vh - 50px));
+    }
+    
+    #left-panel {
+        padding: 55px 12px 15px 12px;
+    }
+    
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .header p {
+        font-size: 10px !important;
+    }
+    
+    h2 {
+        font-size: 15px;
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        font-size: 13px;
+        padding: 11px;
+    }
+    
+    #map {
+        height: 180px;
+    }
+    
+    .section {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+    }
+    
+    .detail-row {
+        font-size: 12px;
+    }
+}
+
+/* Landscape Mode на мобильных */
+@media (max-width: 896px) and (orientation: landscape) {
+    #ui-container {
+        width: 45%;
+        max-width: 400px;
+        height: 100vh;
+        max-height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: auto;
+        border-right: 2px solid #ff6b35;
+        border-top: none;
+        border-radius: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    #ui-container.expanded {
+        transform: translateX(0);
+    }
+    
+    #canvas-container {
+        width: 100vw;
+        height: 100vh;
+        left: 0;
+        top: 0;
+    }
+    
+    #left-panel {
+        height: 100vh;
+        padding: 15px;
+    }
+    
+    .panel-toggle {
+        top: 50%;
+        left: auto;
+        right: 0;
+        transform: translateY(-50%) translateX(100%);
+        width: 40px;
+        height: 80px;
+        border-radius: 0 20px 20px 0;
+    }
+    
+    #ui-container.expanded .panel-toggle {
+        transform: translateY(-50%) translateX(100%);
+    }
+    
+    #map {
+        height: 180px;
+    }
+}
+
+/* Touch Devices Optimization */
+@media (hover: none) and (pointer: coarse) {
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-visualization:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+    }
+    
+    .asteroid-card:active {
+        transform: translateX(3px);
+        opacity: 0.9;
+    }
+    
+    .map-expand-btn:active {
+        transform: scale(0.9);
+    }
+    
+    /* Все кнопки должны быть минимум 44px */
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Увеличиваем touch targets */
+    input[type="number"],
+    select {
+        min-height: 44px;
+        padding: 12px;
+    }
+}
+
+/* iOS Safe Area Support */
+@supports (padding-top: env(safe-area-inset-top)) {
+    @media (max-width: 768px) {
+        #ui-container {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+        }
+        
+        #left-panel {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+        }
+    }
+}
+
+/* Reduce Motion for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Panel Toggle для мобильных */
+@media (max-width: 768px) {
+    .panel-toggle {
+        display: block;
+    }
+}
