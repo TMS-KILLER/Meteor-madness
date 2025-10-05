@@ -1,24 +1,36 @@
 // Инициализация сцены
 async function init() {
+    console.log('🚀 Initializing application...');
+    
     // Создание сцены
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
+    // Получаем размеры canvas контейнера
+    const container = document.getElementById('canvas-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
     // Камера
     camera = new THREE.PerspectiveCamera(
         75,
-        window.innerWidth / window.innerHeight,
+        width / height,
         0.1,
         10000
     );
     camera.position.z = 30;
 
     // Рендерер
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer = new THREE.WebGLRenderer({ 
+        antialias: true,
+        alpha: false,
+        powerPreference: "high-performance"
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
     // Управление камерой
     controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -26,6 +38,12 @@ async function init() {
     controls.dampingFactor = 0.05;
     controls.minDistance = 15;
     controls.maxDistance = 100;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.touches = {
+        ONE: THREE.TOUCH.ROTATE,
+        TWO: THREE.TOUCH.DOLLY_PAN
+    };
 
     // Освещение
     const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
@@ -49,6 +67,11 @@ async function init() {
 
     // Обработка изменения размера окна
     window.addEventListener('resize', onWindowResize);
+    
+    // Инициализация мобильной адаптации
+    if (typeof initMobile === 'function') {
+        initMobile();
+    }
 
     // Загрузка данных NASA
     await loadNASAData();
@@ -91,9 +114,17 @@ async function init() {
 
 // Обработка изменения размера окна
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const container = document.getElementById('canvas-container');
+    if (!container || !camera || !renderer) return;
+    
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(width, height);
+    
+    console.log(`📐 Window resized: ${width}x${height}`);
 }
 
 // Анимация

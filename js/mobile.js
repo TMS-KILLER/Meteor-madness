@@ -59,24 +59,39 @@ function setupPanelToggle() {
     const panelToggle = document.getElementById('panel-toggle');
     const uiContainer = document.getElementById('ui-container');
     
-    if (!panelToggle || !uiContainer) return;
+    if (!panelToggle || !uiContainer) {
+        console.warn('⚠️ Panel toggle elements not found');
+        return;
+    }
     
-    // Начинаем со свернутой панели
-    uiContainer.classList.remove('expanded');
+    console.log('🎛️ Setting up panel toggle...');
     
+    // Начинаем со свернутой панели на мобильных
+    const isMobile = isMobileDevice();
+    const isLandscape = window.innerWidth > window.innerHeight;
+    
+    if (isMobile && !isLandscape) {
+        uiContainer.classList.remove('expanded');
+    } else if (isMobile && isLandscape) {
+        uiContainer.classList.remove('expanded');
+    }
+    
+    // Обработчик клика на кнопку
     panelToggle.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
-        uiContainer.classList.toggle('expanded');
+        const isExpanded = uiContainer.classList.toggle('expanded');
         
         // Обновляем aria-label для доступности
-        if (uiContainer.classList.contains('expanded')) {
+        if (isExpanded) {
             panelToggle.setAttribute('aria-label', 'Свернуть панель');
             vibrate(30);
+            console.log('📖 Panel expanded');
         } else {
             panelToggle.setAttribute('aria-label', 'Развернуть панель');
             vibrate(20);
+            console.log('📕 Panel collapsed');
         }
         
         // Обновляем размер канваса после анимации
@@ -87,16 +102,29 @@ function setupPanelToggle() {
         }, 400);
     });
     
-    // Закрываем панель при клике на канвас
+    // Закрываем панель при клике на канвас (только portrait mobile)
     const canvasContainer = document.getElementById('canvas-container');
-    if (canvasContainer) {
-        canvasContainer.addEventListener('click', function() {
-            if (uiContainer.classList.contains('expanded')) {
-                uiContainer.classList.remove('expanded');
-                panelToggle.setAttribute('aria-label', 'Развернуть панель');
+    if (canvasContainer && isMobile) {
+        let tapTimeout = null;
+        
+        canvasContainer.addEventListener('click', function(e) {
+            // Проверяем что клик не на UI элементах
+            if (e.target.closest('#ui-container')) return;
+            
+            const isPortrait = window.innerHeight > window.innerWidth;
+            
+            if (isPortrait && uiContainer.classList.contains('expanded')) {
+                clearTimeout(tapTimeout);
+                tapTimeout = setTimeout(() => {
+                    uiContainer.classList.remove('expanded');
+                    panelToggle.setAttribute('aria-label', 'Развернуть панель');
+                    console.log('📕 Panel auto-collapsed');
+                }, 100);
             }
         });
     }
+    
+    console.log('✅ Panel toggle configured');
 }
 
 // Оптимизация для мобильных устройств
@@ -123,43 +151,56 @@ function optimizeForMobile() {
 // Обработка изменения ориентации
 function handleOrientationChange() {
     setTimeout(() => {
-        console.log('🔄 Orientation changed');
+        const orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+        console.log(`🔄 Orientation changed to: ${orientation}`);
         
-        // Обновляем размеры canvas
-        if (camera && renderer) {
-            const container = document.getElementById('canvas-container');
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-        }
+        // Обновляем размеры через handleResize
+        handleResize();
         
-        // Обновляем карты Leaflet
-        if (window.map) {
-            setTimeout(() => window.map.invalidateSize(), 100);
-        }
-        if (window.mapFullscreen) {
-            setTimeout(() => window.mapFullscreen.invalidateSize(), 100);
+        // Адаптируем UI под ориентацию
+        const uiContainer = document.getElementById('ui-container');
+        const panelToggle = document.getElementById('panel-toggle');
+        
+        if (uiContainer && panelToggle) {
+            if (orientation === 'landscape' && isMobileDevice()) {
+                // В landscape можно оставить развернутой или свернуть
+                // uiContainer.classList.add('expanded');
+            }
         }
         
         // Показываем подсказку по ориентации
         showOrientationHint();
-    }, 200);
+    }, 300);
 }
 
 // Обработка изменения размера окна
 function handleResize() {
-    if (camera && renderer) {
-        const container = document.getElementById('canvas-container');
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-    }
+    if (!window.camera || !window.renderer) return;
+    
+    const container = document.getElementById('canvas-container');
+    if (!container) return;
+    
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    // Обновляем камеру
+    window.camera.aspect = width / height;
+    window.camera.updateProjectionMatrix();
+    
+    // Обновляем рендерер
+    window.renderer.setSize(width, height);
+    
+    // Обновляем карты
+    setTimeout(() => {
+        if (window.map) {
+            window.map.invalidateSize();
+        }
+        if (window.mapFullscreen) {
+            window.mapFullscreen.invalidateSize();
+        }
+    }, 100);
+    
+    console.log(`📐 Resized: ${width}x${height}`);
 }
 
 // Подсказка по ориентации экрана

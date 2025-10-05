@@ -9,17 +9,44 @@ body {
     overflow: hidden;
     background: #000;
     color: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* DESKTOP LAYOUT - По умолчанию */
 #canvas-container {
     position: fixed;
     top: 0;
     left: 400px;
     width: calc(100% - 400px);
-    height: 100%;
+    height: 100vh;
     z-index: 1;
 }
 
+#ui-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 100vh;
+    pointer-events: all;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.95);
+    border-right: 2px solid #ff6b35;
+    box-shadow: 5px 0 20px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+}
+
+#left-panel {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    pointer-events: all;
+    padding: 20px;
+}
+
+/* Loading Screen */
 #loading-screen {
     position: fixed;
     top: 0;
@@ -55,43 +82,26 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-#ui-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 400px;
-    height: 100%;
-    pointer-events: all;
-    z-index: 10;
-    background: rgba(0, 0, 0, 0.95);
-    border-right: 2px solid #ff6b35;
-    box-shadow: 5px 0 20px rgba(0, 0, 0, 0.8);
-}
-
-#left-panel {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    pointer-events: all;
-    padding: 20px;
-}
-
+/* Panel Styles */
 .panel {
     background: rgba(15, 15, 35, 0.95);
     border: 1px solid rgba(255, 107, 53, 0.3);
     border-radius: 12px;
     padding: 20px;
-    width: 400px;
-    max-width: calc(100vw - 40px);
+    width: 100%;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
 }
 
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
 h1 {
     font-size: 24px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     color: #ff6b35;
-    text-align: center;
 }
 
 h2 {
@@ -110,202 +120,110 @@ h2 {
     border-bottom: none;
 }
 
-.asteroid-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.asteroid-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 107, 53, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.asteroid-card:hover {
-    background: rgba(255, 107, 53, 0.2);
-    border-color: #ff6b35;
-    transform: translateX(5px);
-}
-
-.asteroid-card.selected {
-    background: rgba(255, 107, 53, 0.4);
-    border-color: #ff6b35;
-    border-width: 3px;
-}
-
-.asteroid-name {
-    font-weight: bold;
-    color: #ffa07a;
-    margin-bottom: 5px;
-}
-
-.asteroid-size {
-    font-size: 12px;
-    color: #ccc;
-}
-
-.hazard-badge {
-    display: inline-block;
-    background: #ff4444;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    margin-left: 8px;
-}
-
-.instruction {
-    font-size: 14px;
-    color: #aaa;
-    margin-bottom: 10px;
-}
-
-#coordinates {
-    display: flex;
-    justify-content: space-between;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-#coordinates strong {
-    color: #ff6b35;
-}
-
-.btn-primary, .btn-secondary {
+/* Buttons */
+.btn-primary,
+.btn-secondary,
+.btn-visualization {
     width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 8px;
+    padding: 15px;
     font-size: 16px;
     font-weight: bold;
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
-    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    background: linear-gradient(135deg, #ff6b35, #ff4500);
     color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #ff8c42, #ff6b35);
+.btn-primary:hover {
+    background: linear-gradient(135deg, #ff4500, #ff6b35);
     transform: scale(1.02);
-    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.5);
-}
-
-.btn-primary:disabled {
-    background: #555;
-    cursor: not-allowed;
-    opacity: 0.5;
 }
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 107, 53, 0.5);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.btn-cinematic {
-    width: 100%;
-    padding: 14px;
-    border: 2px solid rgba(138, 43, 226, 0.5);
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-    margin-bottom: 10px;
-    background: rgba(138, 43, 226, 0.2);
-    color: white;
-}
-
-.btn-cinematic:hover {
-    background: rgba(138, 43, 226, 0.3);
-    border-color: rgba(138, 43, 226, 0.8);
-    transform: scale(1.02);
-}
-
-.btn-cinematic.active {
-    background: linear-gradient(135deg, #8a2be2, #9b59b6);
-    border-color: #8a2be2;
-    box-shadow: 0 4px 20px rgba(138, 43, 226, 0.5);
+    background: rgba(255, 107, 53, 0.2);
+    border-color: #ff6b35;
 }
 
 .btn-visualization {
-    width: 100%;
-    padding: 14px;
-    border: 2px solid rgba(255, 107, 53, 0.5);
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-    margin-bottom: 10px;
-    background: rgba(255, 107, 53, 0.2);
+    background: rgba(100, 149, 237, 0.3);
     color: white;
+    border: 1px solid rgba(100, 149, 237, 0.5);
 }
 
 .btn-visualization:hover {
-    background: rgba(255, 107, 53, 0.3);
-    border-color: rgba(255, 107, 53, 0.8);
-    transform: scale(1.02);
+    background: rgba(100, 149, 237, 0.5);
 }
 
-.btn-visualization.active {
-    background: linear-gradient(135deg, #ff6b35, #ff4400);
-    border-color: #ff6b35;
-    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.6);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 4px 20px rgba(255, 107, 53, 0.6);
-    }
-    50% {
-        box-shadow: 0 4px 30px rgba(255, 107, 53, 0.9);
-    }
-}
-
-#asteroid-details, #impact-details {
-    background: rgba(255, 255, 255, 0.05);
+/* Input Fields */
+input[type="number"],
+select {
+    width: 100%;
     padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #444;
     border-radius: 6px;
+    color: white;
     font-size: 14px;
-    line-height: 1.8;
+    margin-top: 5px;
 }
 
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+    border-color: #ff6b35;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.coordinate-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.coordinate-inputs > div {
+    flex: 1;
+}
+
+label {
+    font-size: 12px;
+    color: #aaa;
+    display: block;
+}
+
+/* Map */
 #map {
+    width: 100%;
+    height: 250px;
+    border-radius: 8px;
     border: 2px solid rgba(255, 107, 53, 0.3);
-    z-index: 1;
+    margin-top: 10px;
 }
 
-.leaflet-popup-content-wrapper {
-    background: rgba(15, 15, 35, 0.95);
-    color: #fff;
-}
-
-.leaflet-popup-tip {
-    background: rgba(15, 15, 35, 0.95);
+/* Details */
+#asteroid-details {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
 }
 
 .detail-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 14px;
 }
 
 .detail-label {
@@ -313,594 +231,8 @@ h2 {
 }
 
 .detail-value {
-    color: #ff6b35;
-    font-weight: bold;
-}
-
-.realtime-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    padding: 8px;
-    background: rgba(255, 107, 53, 0.1);
-    border-radius: 4px;
-    animation: dataUpdate 0.5s ease;
-}
-
-@keyframes dataUpdate {
-    0% {
-        background: rgba(255, 107, 53, 0.3);
-    }
-    100% {
-        background: rgba(255, 107, 53, 0.1);
-    }
-}
-
-.realtime-label {
-    color: #aaa;
-    font-size: 14px;
-}
-
-.realtime-value {
-    color: #00ff00;
-    font-weight: bold;
-    font-size: 16px;
-    font-family: 'Courier New', monospace;
-}
-
-/* Скроллбар */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(255, 107, 53, 0.5);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 107, 53, 0.8);
-}
-
-/* ============================================
-   АДАПТАЦИЯ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
-   ============================================ */
-
-/* Планшеты (portrait) */
-@media (max-width: 1024px) and (orientation: portrait) {
-    #ui-container {
-        width: 100%;
-        height: 50vh;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        border-right: none;
-        border-top: 2px solid #ff6b35;
-    }
-    
-    #canvas-container {
-        left: 0;
-        width: 100%;
-        height: 50vh;
-        top: 0;
-    }
-    
-    #left-panel {
-        max-height: 50vh;
-        overflow-y: auto;
-    }
-    
-    .header h1 {
-        font-size: 20px;
-    }
-}
-
-/* Мобильные устройства */
-@media (max-width: 768px) {
-    body {
-        overflow: hidden;
-    }
-    
-    #ui-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 70vh;
-        border-right: none;
-        border-top: 3px solid #ff6b35;
-        background: rgba(0, 0, 0, 0.98);
-        transform: translateY(calc(70vh - 60px));
-        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 100;
-    }
-    
-    #ui-container.expanded {
-        transform: translateY(0);
-    }
-    
-    #ui-container .panel {
-        height: calc(100% - 60px);
-        overflow-y: auto;
-        padding-top: 10px;
-    }
-    
-    #canvas-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        z-index: 1;
-    }
-    
-    #left-panel {
-        width: 100%;
-        max-height: none;
-        padding: 15px;
-    }
-    
-    .panel {
-        width: 100%;
-        padding: 15px;
-    }
-    
-    .header h1 {
-        font-size: 18px;
-    }
-    
-    h2 {
-        font-size: 16px;
-    }
-    
-    .btn-primary, .btn-secondary, .btn-visualization {
-        font-size: 14px;
-        padding: 12px;
-    }
-    
-    #map {
-        height: 200px;
-    }
-    
-    .section {
-        margin-bottom: 15px;
-        padding-bottom: 15px;
-    }
-    
-    /* Координаты в столбик на маленьких экранах */
-    #coordinates {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    /* Инпуты координат */
-    .coordinate-inputs {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .coordinate-inputs > div {
-        width: 100% !important;
-    }
-    
-    /* Детали в две колонки */
-    .detail-row {
-        font-size: 13px;
-    }
-    
-    .detail-label, .detail-value {
-        font-size: 13px;
-    }
-    
-    /* Fullscreen map на мобильных */
-    .map-fullscreen-container {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-    }
-    
-    .map-fullscreen-header {
-        height: 50px;
-        padding: 0 15px;
-    }
-    
-    .map-fullscreen-title {
-        font-size: 18px;
-    }
-    
-    .map-fullscreen-content {
-        top: 50px;
-    }
-}
-
-/* Очень маленькие экраны */
-@media (max-width: 480px) {
-    .header h1 {
-        font-size: 16px;
-    }
-    
-    .header p {
-        font-size: 10px;
-    }
-    
-    h2 {
-        font-size: 14px;
-    }
-    
-    .btn-primary, .btn-secondary, .btn-visualization {
-        font-size: 13px;
-        padding: 10px;
-    }
-    
-    #map {
-        height: 180px;
-    }
-    
-    .detail-row {
-        font-size: 12px;
-    }
-    
-    .section {
-        padding: 10px;
-        margin-bottom: 10px;
-    }
-}
-
-/* Landscape mode на мобильных */
-@media (max-width: 768px) and (orientation: landscape) {
-    #ui-container {
-        width: 40%;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        border-right: 2px solid #ff6b35;
-        border-top: none;
-    }
-    
-    #canvas-container {
-        width: 60%;
-        height: 100vh;
-        left: 40%;
-        top: 0;
-    }
-    
-    #left-panel {
-        height: 100vh;
-        max-height: 100vh;
-    }
-    
-    #map {
-        height: 150px;
-    }
-}
-
-/* Поддержка touch устройств */
-@media (hover: none) and (pointer: coarse) {
-    .btn-primary:active,
-    .btn-secondary:active,
-    .btn-visualization:active {
-        transform: scale(0.95);
-    }
-    
-    .asteroid-card:active {
-        transform: translateX(3px);
-    }
-    
-    .map-expand-btn:active {
-        transform: scale(0.9);
-    }
-    
-    /* Увеличиваем размер кликабельных элементов */
-    button {
-        min-height: 44px;
-    }
-    
-    input[type="number"] {
-        min-height: 44px;
-        font-size: 16px; /* Предотвращает zoom на iOS */
-    }
-    
-    select {
-        min-height: 44px;
-        font-size: 16px;
-    }
-}
-
-/* Hamburger menu для мобильных (опционально) */
-@media (max-width: 768px) {
-    .mobile-toggle {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 10001;
-        width: 50px;
-        height: 50px;
-        background: rgba(255, 107, 53, 0.9);
-        border: none;
-        border-radius: 10px;
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .mobile-toggle span {
-        width: 25px;
-        height: 3px;
-        background: white;
-        border-radius: 2px;
-        transition: all 0.3s;
-    }
-    
-    .mobile-toggle.active span:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-    }
-    
-    .mobile-toggle.active span:nth-child(2) {
-        opacity: 0;
-    }
-    
-    .mobile-toggle.active span:nth-child(3) {
-        transform: rotate(-45deg) translate(7px, -6px);
-    }
-}
-
-/* Улучшенный scrollbar для мобильных */
-@media (max-width: 768px) {
-    #left-panel::-webkit-scrollbar {
-        width: 4px;
-    }
-    
-    #left-panel::-webkit-scrollbar-thumb {
-        background: rgba(255, 107, 53, 0.6);
-        border-radius: 2px;
-    }
-}
-
-/* Прелоадер оптимизация */
-@media (max-width: 768px) {
-    #loading-screen {
-        background: rgba(0, 0, 0, 0.98);
-    }
-    
-    .loader {
-        width: 50px;
-        height: 50px;
-    }
-    
-    #loading-screen p {
-        font-size: 14px;
-    }
-}
-
-/* Безопасная зона для iPhone с выемкой */
-@supports (padding-top: env(safe-area-inset-top)) {
-    #ui-container {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-}
-
-/* Оптимизация анимаций для производительности */
-@media (max-width: 768px) {
-    * {
-        -webkit-transform: translate3d(0, 0, 0);
-        transform: translate3d(0, 0, 0);
-    }
-    
-    .btn-primary,
-    .btn-secondary,
-    .btn-visualization {
-        will-change: transform;
-    }
-}
-
-/* Панель последствий */
-#impact-consequences {
-    animation: slideIn 0.5s ease-out;
-}
-
-#consequences-data .detail-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-#consequences-data .detail-row:last-child {
-    border-bottom: none;
-}
-
-#consequences-data .detail-label {
-    color: #ccc;
-    font-size: 14px;
-}
-
-#consequences-data .detail-value {
-    color: #ff6b35;
-    font-weight: bold;
-    text-align: right;
-}
-
-/* Анимация появления панелей */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Выпадающий список астероидов */
-#asteroid-select {
-    width: 100%;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid #444;
-    border-radius: 6px;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s;
-    outline: none;
-}
-
-#asteroid-select:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #ff6b35;
-}
-
-#asteroid-select:focus {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: #ff6b35;
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
-}
-
-#asteroid-select option {
-    background: #1a1a1a;
-    color: white;
-    padding: 10px;
-}
-
-#asteroid-select option:hover {
-    background: #ff6b35;
-}
-
-/* Map expand button in corner */
-.map-expand-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    width: 30px;
-    height: 30px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #ff6b35;
-    border-radius: 4px;
     color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    padding: 0;
-}
-
-.map-expand-btn:hover {
-    background: #ff6b35;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.5);
-}
-
-.map-expand-btn:active {
-    transform: scale(0.95);
-}
-
-/* Fullscreen map overlay */
-.map-fullscreen-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 10000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-}
-
-.map-fullscreen-overlay.active {
-    display: flex;
-    opacity: 1;
-}
-
-.map-fullscreen-container {
-    width: 90vw;
-    height: 90vh;
-    background: #1a1a2e;
-    border-radius: 12px;
-    border: 3px solid #ff6b35;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-    position: relative;
-    overflow: hidden;
-    transform: scale(0.8);
-    transition: transform 0.4s ease;
-}
-
-.map-fullscreen-overlay.active .map-fullscreen-container {
-    transform: scale(1);
-}
-
-.map-fullscreen-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-bottom: 2px solid #ff6b35;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 10001;
-}
-
-.map-fullscreen-title {
-    color: #ff6b35;
-    font-size: 24px;
     font-weight: bold;
-}
-
-.map-fullscreen-close {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 107, 53, 0.2);
-    border: 2px solid #ff6b35;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s;
-}
-
-.map-fullscreen-close:hover {
-    background: #ff6b35;
-    transform: rotate(90deg) scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
-}
-
-.map-fullscreen-content {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
-
-#map-fullscreen {
-    width: 100%;
-    height: 100%;
 }
 
 /* Кнопка сворачивания/разворачивания панели */
@@ -918,9 +250,10 @@ h2 {
     color: white;
     font-size: 20px;
     cursor: pointer;
-    z-index: 1000;
+    z-index: 1001;
     box-shadow: 0 -2px 10px rgba(255, 107, 53, 0.5);
     transition: all 0.3s ease;
+    touch-action: manipulation;
 }
 
 .panel-toggle:active {
@@ -936,10 +269,430 @@ h2 {
     transform: rotate(180deg);
 }
 
-@media (max-width: 768px) {
-    .panel-toggle {
-        display: block;
+/* Map Fullscreen */
+.map-fullscreen-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    max-width: 1200px;
+    background: rgba(0, 0, 0, 0.98);
+    border-radius: 12px;
+    border: 3px solid #ff6b35;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+}
+
+.map-fullscreen-container.active {
+    display: flex;
+}
+
+.map-fullscreen-header {
+    height: 60px;
+    background: linear-gradient(135deg, #ff6b35, #ff4500);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.map-fullscreen-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.map-fullscreen-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.map-fullscreen-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: rotate(90deg);
+}
+
+.map-fullscreen-content {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+}
+
+/* Scrollbar Styling */
+#left-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+#left-panel::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+#left-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 53, 0.6);
+    border-radius: 4px;
+}
+
+#left-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 107, 53, 0.8);
+}
+
+/* ===================================
+   RESPONSIVE DESIGN - MOBILE FIRST
+   =================================== */
+
+/* Tablet Portrait - 1024px and below */
+@media (max-width: 1024px) and (min-width: 769px) {
+    #ui-container {
+        width: 350px;
+    }
+    
+    #canvas-container {
+        left: 350px;
+        width: calc(100% - 350px);
     }
 }
 
+/* Mobile & Tablet - 768px and below */
+@media (max-width: 768px) {
+    body {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100vh;
+    }
+    
+    /* Выдвижная панель снизу */
+    #ui-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 75vh;
+        max-height: 75vh;
+        border-right: none;
+        border-top: 3px solid #ff6b35;
+        background: rgba(0, 0, 0, 0.98);
+        transform: translateY(calc(75vh - 50px));
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    #ui-container.expanded {
+        transform: translateY(0);
+    }
+    
+    /* Панель внутри контейнера */
+    #left-panel {
+        width: 100%;
+        height: 100%;
+        padding: 60px 15px 20px 15px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .panel {
+        width: 100%;
+        padding: 15px;
+        margin: 0;
+    }
+    
+    /* Canvas на весь экран */
+    #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+    }
+    
+    /* Показываем кнопку toggle */
+    .panel-toggle {
+        display: block;
+    }
+    
+    /* Уменьшаем шрифты */
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    h2 {
+        font-size: 16px;
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        font-size: 14px;
+        padding: 12px;
+        min-height: 44px;
+    }
+    
+    /* Карта меньше */
+    #map {
+        height: 200px;
+    }
+    
+    /* Координаты в столбик */
+    .coordinate-inputs {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .coordinate-inputs > div {
+        width: 100% !important;
+    }
+    
+    /* Fullscreen map */
+    .map-fullscreen-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        max-width: none;
+    }
+    
+    .map-fullscreen-header {
+        height: 50px;
+        padding: 0 15px;
+    }
+    
+    .map-fullscreen-title {
+        font-size: 16px;
+    }
+    
+    .map-fullscreen-content {
+        top: 50px;
+    }
+    
+    /* Детали */
+    .detail-row {
+        font-size: 13px;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    /* Скроллбар тоньше */
+    #left-panel::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    /* Инпуты для iOS */
+    input[type="number"],
+    select {
+        font-size: 16px; /* Предотвращает zoom на iOS */
+        min-height: 44px;
+    }
+}
 
+/* Small Mobile - 480px and below */
+@media (max-width: 480px) {
+    #ui-container {
+        height: 80vh;
+        transform: translateY(calc(80vh - 50px));
+    }
+    
+    #left-panel {
+        padding: 55px 12px 15px 12px;
+    }
+    
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .header p {
+        font-size: 10px !important;
+    }
+    
+    h2 {
+        font-size: 15px;
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        font-size: 13px;
+        padding: 11px;
+    }
+    
+    #map {
+        height: 180px;
+    }
+    
+    .section {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+    }
+    
+    .detail-row {
+        font-size: 12px;
+    }
+}
+
+/* Landscape Mode на мобильных */
+@media (max-width: 896px) and (orientation: landscape) {
+    #ui-container {
+        width: 45%;
+        max-width: 400px;
+        height: 100vh;
+        max-height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: auto;
+        border-right: 2px solid #ff6b35;
+        border-top: none;
+        border-radius: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    #ui-container.expanded {
+        transform: translateX(0);
+    }
+    
+    #canvas-container {
+        width: 100vw;
+        height: 100vh;
+        left: 0;
+        top: 0;
+    }
+    
+    #left-panel {
+        height: 100vh;
+        padding: 15px;
+    }
+    
+    .panel-toggle {
+        top: 50%;
+        left: auto;
+        right: 0;
+        transform: translateY(-50%) translateX(100%);
+        width: 40px;
+        height: 80px;
+        border-radius: 0 20px 20px 0;
+    }
+    
+    #ui-container.expanded .panel-toggle {
+        transform: translateY(-50%) translateX(100%);
+    }
+    
+    #map {
+        height: 180px;
+    }
+}
+
+/* Touch Devices Optimization */
+@media (hover: none) and (pointer: coarse) {
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-visualization:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+    }
+    
+    .asteroid-card:active {
+        transform: translateX(3px);
+        opacity: 0.9;
+    }
+    
+    .map-expand-btn:active {
+        transform: scale(0.9);
+    }
+    
+    /* Все кнопки должны быть минимум 44px */
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .btn-visualization {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Увеличиваем touch targets */
+    input[type="number"],
+    select {
+        min-height: 44px;
+        padding: 12px;
+    }
+}
+
+/* iOS Safe Area Support */
+@supports (padding-top: env(safe-area-inset-top)) {
+    @media (max-width: 768px) {
+        #ui-container {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+        }
+        
+        #left-panel {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+        }
+    }
+}
+
+/* Performance Optimizations */
+@media (max-width: 768px) {
+    /* GPU acceleration */
+    #ui-container,
+    #canvas-container,
+    .panel-toggle {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
+    }
+    
+    /* Оптимизация анимаций */
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Loading Screen Mobile */
+@media (max-width: 768px) {
+    #loading-screen {
+        background: rgba(0, 0, 0, 0.98);
+    }
+    
+    .loader {
+        width: 50px;
+        height: 50px;
+    }
+    
+    #loading-screen p {
+        font-size: 14px;
+        padding: 0 20px;
+        text-align: center;
+    }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #000;
+    }
+}
+
+/* Reduce Motion for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
