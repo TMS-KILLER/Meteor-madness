@@ -50,6 +50,15 @@ function startSimulation() {
     isSimulationRunning = true;
     document.getElementById('start-simulation').disabled = true;
 
+    // AUTO-CLOSE PANEL ON MOBILE (NASA Eyes UX)
+    if (typeof isMobileDevice !== 'undefined' && isMobileDevice()) {
+        const uiContainer = document.getElementById('ui-container');
+        if (uiContainer && uiContainer.classList.contains('expanded')) {
+            uiContainer.classList.remove('expanded');
+            console.log('📱 Panel auto-closed for mobile simulation view');
+        }
+    }
+
     // Calculate impact energy (WITHOUT showing consequences)
     calculateImpact();
 
@@ -663,6 +672,17 @@ function animateImpact() {
             if (window.impactCalculations) {
                 const calc = window.impactCalculations;
                 calculateConsequences(calc.diameter, calc.velocity, calc.mass, calc.kineticEnergy, calc.megatons, calc.craterDiameter);
+            }
+            
+            // AUTO-REOPEN PANEL ON MOBILE AFTER 5 SECONDS (NASA Eyes UX)
+            if (typeof isMobileDevice !== 'undefined' && isMobileDevice()) {
+                setTimeout(() => {
+                    const uiContainer = document.getElementById('ui-container');
+                    if (uiContainer && !uiContainer.classList.contains('expanded')) {
+                        uiContainer.classList.add('expanded');
+                        console.log('📱 Panel auto-reopened after explosion (5s delay)');
+                    }
+                }, 5000); // 5 seconds after explosion
             }
             
             // ACCURACY CHECK: Calculate coordinates back from endPos

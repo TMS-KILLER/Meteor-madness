@@ -62,7 +62,10 @@ function createEarth() {
     const textureLoader = new THREE.TextureLoader();
     const earthTexture = textureLoader.load(
         'textures/earth.jpg',
-        () => console.log('✅ Текстура Земли от NASA загружена'),
+        () => {
+            console.log('✅ Текстура Земли от NASA загружена');
+            console.log('📐 Texture alignment: 0° longitude = -Z axis (Greenwich Meridian)');
+        },
         undefined,
         (error) => {
             console.error('❌ Ошибка загрузки текстуры Земли:', error);
@@ -74,6 +77,13 @@ function createEarth() {
             });
         }
     );
+    
+    // ВАЖНО: Убедимся что текстура правильно ориентирована
+    // Текстура должна быть equirectangular (равнопромежуточная)
+    // 0° долготы (Greenwich) должен быть в центре текстуры
+    earthTexture.wrapS = THREE.RepeatWrapping;
+    earthTexture.wrapT = THREE.ClampToEdgeWrapping;
+    // Смещение текстуры не требуется - стандартная ориентация
 
     const material = new THREE.MeshPhongMaterial({
         map: earthTexture,
@@ -84,10 +94,20 @@ function createEarth() {
     earth = new THREE.Mesh(geometry, material);
     earth.receiveShadow = true;
     
-    // НЕ ПОВОРАЧИВАЕМ Землю - вместо этого корректируем формулы координат
-    // Текстура выровнена стандартно: 0° долготы по оси -Z
+    // КРИТИЧНО: НЕ вращаем Землю!
+    // earth.rotation.y = 0 (по умолчанию)
+    // Текстура NASA Blue Marble стандартно выровнена:
+    // - 0° долготы (Greenwich) направлен на -Z
+    // - 0° широты (Экватор) на плоскости XZ
+    // - +X указывает на 90° в.д. (Индия/Бангладеш)
+    // - -X указывает на 90° з.д. (Галапагосские острова)
+    earth.rotation.y = 0;
     
-    console.log('🌍 Earth created with standard texture alignment');
+    console.log('🌍 Earth created - Standard orientation:');
+    console.log('   0° Long, 0° Lat → Point (0, 0, -10)');
+    console.log('   90° E, 0° Lat → Point (10, 0, 0)');
+    console.log('   180° Long, 0° Lat → Point (0, 0, 10)');
+    console.log('   90° W, 0° Lat → Point (-10, 0, 0)');
     
     scene.add(earth);
 
